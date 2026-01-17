@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import { generateToken } from '../lib/auth';
 
 export const validateSignup = (req: Request, res: Response, next: NextFunction) => {
   const { email, password, name } = req.body;
@@ -10,7 +9,7 @@ export const validateSignup = (req: Request, res: Response, next: NextFunction) 
       .json({ error: 'Email, password, and name are required' });
   }
 
-  if (typeof email !== 'string' || email.includes('@')) {
+  if (typeof email !== 'string' || !email.includes('@')) {
     return res
       .status(400)
       .json({ error: 'Invalid email format' });
@@ -34,7 +33,7 @@ export const validateLogin = (req: Request, res: Response, next: NextFunction) =
       .json({ error: 'Email and password are required' });
   }
 
-  if (typeof email !== 'string' || email.includes('@')) {
+  if (typeof email !== 'string' || !email.includes('@')) {
     return res
       .status(400)
       .json({ error: 'Invalid email format' });

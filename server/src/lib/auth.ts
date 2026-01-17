@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 
 const JWT_SECRET : string = process.env.JWT_SECRET!;
 
-export const generateToken = (userId: string, role: string): string => {
+export const generateToken = (userId: number, role: string): string => {
   return jwt.sign({ userId, role }, JWT_SECRET, {
     expiresIn: '7d',
   });

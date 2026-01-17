@@ -45,7 +45,6 @@ export const applicationStatusEnum = pgEnum('application_status', [
   'withdrawn',
 ]);
 
-
 export const users = pgTable(
   'users',
   {
@@ -53,6 +52,7 @@ export const users = pgTable(
     email: text('email').notNull().unique(),
     name: text('name').notNull(),
     role: userRoleEnum('role').notNull().default('job_seeker'),
+    passwordHash: text('password_hash').notNull(),
     createdAt: timestamp('created_at').notNull().defaultNow(),
   },
   (table) => ({
