@@ -17,3 +17,8 @@
   --acc: #ff6b35;
   --mut: #5a5d61;
 }
+
+body {
+  @apply bg-background text-text min-h-screen font-sans;
+  margin: 0;
+}
