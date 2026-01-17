@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: var(--bg);
+  --color-text: var(--txt);
+  --color-primary: var(--pri);
+  --color-secondary: var(--sec);
+  --color-accent: var(--acc);
+  --color-muted: var(--mut);
+}
+
+:root {
+  --bg: #1f2122;
+  --txt: #e0e0e0;
+  --pri: #ec5325;
+  --sec: #3a3d40;
+  --acc: #ff6b35;
+  --mut: #5a5d61;
+}
