@@ -1,25 +1,72 @@
-import React from 'react';
+import { useAuth } from '../context/useAuth';
+import { Link } from 'react-router-dom';
 
-const HomePage = () => {
+export default function HomePage() {
+  const { user, logout } = useAuth();
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="py-6 px-4 sm:px-6 lg:px-8 border-b border-muted">
+    <div className="min-h-screen flex flex-col bg-background">
+      <header className="py-6 px-4 sm:px-6 lg:px-8 border-b border-muted bg-background">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold text-primary">LockedIn</h1>
+
           <nav>
-            <button className="px-4 py-2 text-text hover:text-primary transition-colors">
-              Sign In
-            </button>
-            <button className="ml-3 px-4 py-2 bg-primary text-white rounded-md hover:bg-accent transition-colors">
-              Get Started
-            </button>
+            {user ? (
+              <div className="flex items-center gap-4">
+                {user.role === 'job_seeker' ? (
+                  <Link
+                    to="/profile"
+                    className="px-4 py-2 text-text hover:text-primary transition-colors"
+                  >
+                    My Profile
+                  </Link>
+                ) : (
+                  <Link
+                    to="/jobs/post"
+                    className="px-4 py-2 text-text hover:text-primary transition-colors"
+                  >
+                    Post a Job
+                  </Link>
+                )}
+
+                <Link
+                  to="/profile"
+                  className="text-text hover:text-primary"
+                >
+                  {user.name}
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="px-3 py-1 text-sm text-muted hover:text-primary transition-colors"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <div>
+                <Link
+                  to="/login"
+                  className="px-4 py-2 text-text hover:text-primary transition-colors"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/signup"
+                  className="ml-3 px-4 py-2 bg-primary text-white rounded-md hover:bg-accent transition-colors"
+                >
+                  Get Started
+                </Link>
+              </div>
+            )}
           </nav>
         </div>
       </header>
 
-      <main className="flex-grow flex items-center justify-center px-4 sm:px-6 lg:px-8">
+      <main className="flex-grow flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-background">
         <div className="max-w-3xl text-center">
-          <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight">
+          <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-text">
             Find Your Next Role.
             <br />
             <span className="text-primary">Stay Locked In.</span>
@@ -27,58 +74,50 @@ const HomePage = () => {
           <p className="mt-6 text-lg text-muted max-w-xl mx-auto">
             A job board built for focus — detailed company profiles, smart matching, and zero distractions.
           </p>
-          <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-            <button className="px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-accent transition-colors">
-              Browse Jobs
-            </button>
-            <button className="px-6 py-3 bg-secondary text-text font-medium rounded-lg border border-muted hover:bg-muted transition-colors">
-              For Employers
-            </button>
-          </div>
+
+          {user ? (
+            user.role === 'job_seeker' ? (
+              <div className="mt-8">
+                <Link
+                  to="/jobs"
+                  className="px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-accent transition-colors"
+                >
+                  Browse Jobs
+                </Link>
+              </div>
+            ) : (
+              <div className="mt-8">
+                <Link
+                  to="/jobs/post"
+                  className="px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-accent transition-colors"
+                >
+                  Post a New Job
+                </Link>
+              </div>
+            )
+          ) : (
+            <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
+              <Link
+                to="/signup"
+                className="px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-accent transition-colors"
+              >
+                Get Started
+              </Link>
+              <Link
+                to="/jobs"
+                className="px-6 py-3 bg-secondary text-text font-medium rounded-lg border border-muted hover:bg-muted transition-colors"
+              >
+                Browse Jobs
+              </Link>
+            </div>
+          )}
         </div>
       </main>
 
       <footer className="bg-secondary border-t border-muted">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <h3 className="text-lg font-semibold text-text mb-4">About LockedIn</h3>
-              <p className="text-muted text-sm">
-                We help developers find meaningful roles at companies that value focus, craftsmanship, and deep work.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold text-text mb-4">For Job Seekers</h3>
-              <ul className="space-y-2 text-muted text-sm">
-                <li><a href="#" className="hover:text-primary transition-colors">Browse Jobs</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Profile Tips</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Application Tracker</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold text-text mb-4">For Companies</h3>
-              <ul className="space-y-2 text-muted text-sm">
-                <li><a href="#" className="hover:text-primary transition-colors">Post a Job</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Company Profiles</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Subscription Plans</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold text-text mb-4">Support</h3>
-              <ul className="space-y-2 text-muted text-sm">
-                <li><a href="#" className="hover:text-primary transition-colors">Contact Us</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Terms of Service</a></li>
-              </ul>
-            </div>
-          </div>
         </div>
       </footer>
     </div>
   );
-};
-
-export default HomePage;
+}

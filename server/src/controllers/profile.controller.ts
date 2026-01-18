@@ -51,8 +51,8 @@ export const getUserProfile = async (req: Request, res: Response) => {
       },
       profile: {
         skills: skillsList,
-        education: edcationList,
-        experience: experienceList,
+        educations: edcationList,
+        experiences: experienceList,
       }
     });
   }
