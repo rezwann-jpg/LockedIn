@@ -10,6 +10,7 @@ import {
   date,
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
 import { InferSelectModel, InferInsertModel } from 'drizzle-orm';
 
 export const userRoleEnum = pgEnum('user_role', [
@@ -180,6 +181,32 @@ export const applications = pgTable(
     appliedAt: timestamp('applied_at').defaultNow(),
   },
 );
+
+export const usersRelations = relations(users, ({ many }) => ({
+companies: many(companies),
+educations: many(educations),
+experiences: many(experiences),
+userSkills: many(userSkills),
+applications: many(applications),
+}));
+
+export const skillsRelations = relations(skills, ({ many }) => ({
+userSkills: many(userSkills),
+jobSkills: many(jobSkills),
+}));
+
+export const jobsRelations = relations(jobs, ({ one, many }) => ({
+company: one(companies, {
+fields: [jobs.companyId],
+references: [companies.id],
+}),
+category: one(categories, {
+fields: [jobs.categoryId],
+references: [categories.id],
+}),
+jobSkills: many(jobSkills),
+applications: many(applications),
+}));
 
 export type User = InferSelectModel<typeof users>;
 export type Company = InferSelectModel<typeof companies>;
