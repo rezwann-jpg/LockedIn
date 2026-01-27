@@ -3,6 +3,19 @@ import { useAuth } from '../../context/useAuth';
 import { useNavigate } from 'react-router-dom';
 import api from '../../lib/api';
 import { AxiosError } from 'axios';
+import {
+  Briefcase,
+  GraduationCap,
+  MapPin,
+  Calendar,
+  Edit2,
+  LogOut,
+  User as UserIcon,
+  Mail,
+  Building,
+  Award,
+  Loader2
+} from 'lucide-react';
 
 type Education = {
   id: number;
@@ -78,26 +91,7 @@ export default function ProfileViewPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex items-center gap-3 text-text">
-          <svg
-            className="animate-spin h-5 w-5 text-primary"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            />
-          </svg>
+          <Loader2 className="animate-spin h-6 w-6 text-primary" />
           <span>Loading profile...</span>
         </div>
       </div>
@@ -107,7 +101,9 @@ export default function ProfileViewPage() {
   if (!user) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-        <div className="text-6xl mb-4">🔒</div>
+        <div className="mb-4 text-muted/50">
+          <UserIcon size={64} />
+        </div>
         <p className="text-text mb-4 text-center">
           You need to be signed in to view your profile.
         </p>
@@ -137,8 +133,9 @@ export default function ProfileViewPage() {
           </div>
           <button
             onClick={() => logout()}
-            className="px-4 py-2 text-muted hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-muted hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
           >
+            <LogOut size={18} />
             Sign Out
           </button>
         </div>
@@ -150,32 +147,39 @@ export default function ProfileViewPage() {
           </div>
         )}
 
-        <div className="bg-secondary p-6 rounded-xl border border-muted/30 mb-8">
-          <div className="flex items-start gap-4">
-            <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center text-2xl">
+        <div className="bg-secondary p-6 rounded-xl border border-muted/30 mb-8 shadow-sm">
+          <div className="flex items-start gap-6">
+            <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center text-3xl font-bold text-primary">
               {user.name.charAt(0).toUpperCase()}
             </div>
 
             <div className="flex-1">
               <h2 className="text-2xl font-semibold text-text mb-1">{user.name}</h2>
-              <p className="text-muted mb-3">{user.email}</p>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/20 text-primary rounded-full text-sm font-medium">
-                {user.role === 'job_seeker' ? '👤 Job Seeker' : '🏢 Company'}
+              <div className="flex items-center gap-2 text-muted mb-3">
+                <Mail size={16} />
+                <span>{user.email}</span>
+              </div>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 text-primary border border-primary/20 rounded-full text-sm font-medium">
+                {user.role === 'job_seeker' ? <UserIcon size={14} /> : <Building size={14} />}
+                {user.role === 'job_seeker' ? 'Job Seeker' : 'Company'}
               </span>
             </div>
 
             <button
               onClick={() => navigate('/profile/setup')}
-              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-accent transition-colors font-medium"
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-accent transition-colors font-medium shadow-sm"
             >
+              <Edit2 size={16} />
               Edit Profile
             </button>
           </div>
         </div>
 
         {isProfileEmpty && (
-          <div className="bg-secondary rounded-xl border border-muted/30 p-8 text-center mb-8">
-            <div className="text-5xl mb-4">📝</div>
+          <div className="bg-secondary rounded-xl border border-dashed border-muted p-10 text-center mb-8">
+            <div className="inline-flex items-center justify-center p-4 bg-background rounded-full mb-4">
+              <Edit2 size={32} className="text-muted" />
+            </div>
             <h3 className="text-xl font-semibold text-text mb-2">Complete Your Profile</h3>
             <p className="text-muted mb-6 max-w-md mx-auto">
               Add your skills, education, and work experience to help employers find you and stand out from other candidates.
@@ -189,19 +193,19 @@ export default function ProfileViewPage() {
           </div>
         )}
 
-        <section className="bg-secondary rounded-xl border border-muted/30 p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
+        <section className="bg-secondary rounded-xl border border-muted/30 p-6 mb-6 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/20 rounded-lg">
-                <span className="text-xl">✨</span>
+              <div className="p-2 bg-blue-500/10 text-blue-500 rounded-lg">
+                <Award size={20} />
               </div>
               <h3 className="text-xl font-semibold text-text">Skills</h3>
             </div>
             <button
               onClick={() => navigate('/profile/setup')}
-              className="text-primary hover:text-accent text-sm font-medium transition-colors"
+              className="text-primary hover:text-accent text-sm font-medium transition-colors p-2 hover:bg-background rounded"
             >
-              Edit
+              <Edit2 size={16} />
             </button>
           </div>
 
@@ -210,32 +214,30 @@ export default function ProfileViewPage() {
               {skills.map((skill, i) => (
                 <span
                   key={`${skill}-${i}`}
-                  className="px-3 py-1.5 bg-primary/20 text-primary rounded-full text-sm font-medium"
+                  className="px-3 py-1.5 bg-background border border-muted/30 text-text rounded-md text-sm font-medium hover:border-primary/50 transition-colors cursor-default"
                 >
                   {skill}
                 </span>
               ))}
             </div>
           ) : (
-            <div className="text-center py-6 bg-background/50 rounded-lg border-2 border-dashed border-muted/30">
-              <p className="text-muted">No skills added yet.</p>
-            </div>
+            <p className="text-muted italic">No skills added yet.</p>
           )}
         </section>
 
-        <section className="bg-secondary rounded-xl border border-muted/30 p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
+        <section className="bg-secondary rounded-xl border border-muted/30 p-6 mb-6 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-500/20 rounded-lg">
-                <span className="text-xl">🎓</span>
+              <div className="p-2 bg-purple-500/10 text-purple-500 rounded-lg">
+                <GraduationCap size={20} />
               </div>
               <h3 className="text-xl font-semibold text-text">Education</h3>
             </div>
             <button
               onClick={() => navigate('/profile/setup')}
-              className="text-primary hover:text-accent text-sm font-medium transition-colors"
+              className="text-primary hover:text-accent text-sm font-medium transition-colors p-2 hover:bg-background rounded"
             >
-              Edit
+              <Edit2 size={16} />
             </button>
           </div>
 
@@ -244,7 +246,7 @@ export default function ProfileViewPage() {
               {educations.map((edu) => (
                 <div
                   key={edu.id}
-                  className="bg-background p-4 rounded-lg border border-muted/20"
+                  className="group relative pl-4 border-l-2 border-muted/30 hover:border-primary/50 transition-colors"
                 >
                   <div className="flex items-start justify-between">
                     <div>
@@ -254,9 +256,12 @@ export default function ProfileViewPage() {
                         {edu.fieldOfStudy && ` in ${edu.fieldOfStudy}`}
                       </p>
                     </div>
-                    <span className="text-sm text-muted whitespace-nowrap">
-                      {formatDate(edu.startDate)} — {formatDate(edu.endDate) || 'Present'}
-                    </span>
+                    <div className="flex items-center gap-1.5 text-sm text-muted">
+                      <Calendar size={14} />
+                      <span>
+                        {formatDate(edu.startDate)} — {formatDate(edu.endDate) || 'Present'}
+                      </span>
+                    </div>
                   </div>
                   {edu.description && (
                     <p className="text-muted mt-2 text-sm">{edu.description}</p>
@@ -265,68 +270,71 @@ export default function ProfileViewPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-6 bg-background/50 rounded-lg border-2 border-dashed border-muted/30">
-              <p className="text-muted">No education listed.</p>
-            </div>
+            <p className="text-muted italic">No education listed.</p>
           )}
         </section>
 
-        <section className="bg-secondary rounded-xl border border-muted/30 p-6">
-          <div className="flex items-center justify-between mb-4">
+        <section className="bg-secondary rounded-xl border border-muted/30 p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-500/20 rounded-lg">
-                <span className="text-xl">💼</span>
+              <div className="p-2 bg-green-500/10 text-green-500 rounded-lg">
+                <Briefcase size={20} />
               </div>
               <h3 className="text-xl font-semibold text-text">Work Experience</h3>
             </div>
             <button
               onClick={() => navigate('/profile/setup')}
-              className="text-primary hover:text-accent text-sm font-medium transition-colors"
+              className="text-primary hover:text-accent text-sm font-medium transition-colors p-2 hover:bg-background rounded"
             >
-              Edit
+              <Edit2 size={16} />
             </button>
           </div>
 
           {experiences.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {experiences.map((exp) => (
                 <div
                   key={exp.id}
-                  className="bg-background p-4 rounded-lg border border-muted/20"
+                  className="group relative pl-4 border-l-2 border-muted/30 hover:border-primary/50 transition-colors"
                 >
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between mb-1">
                     <div>
                       <h4 className="font-semibold text-text text-lg">{exp.position}</h4>
-                      <p className="text-primary font-medium">
-                        {exp.company}
+                      <div className="flex items-center gap-2">
+                        <span className="text-primary font-medium">{exp.company}</span>
                         {exp.location && (
-                          <span className="text-muted font-normal"> • {exp.location}</span>
+                          <>
+                            <span className="text-muted">•</span>
+                            <span className="text-muted text-sm flex items-center gap-1">
+                              <MapPin size={12} />
+                              {exp.location}
+                            </span>
+                          </>
                         )}
-                      </p>
+                      </div>
                     </div>
                     <div className="text-right">
-                      <span className="text-sm text-muted whitespace-nowrap">
-                        {formatDate(exp.startDate)} — {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}
-                      </span>
+                      <div className="flex items-center justify-end gap-1.5 text-sm text-muted mb-1">
+                        <Calendar size={14} />
+                        <span>
+                          {formatDate(exp.startDate)} — {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}
+                        </span>
+                      </div>
                       {exp.currentlyWorking && (
-                        <div className="mt-1">
-                          <span className="inline-flex items-center px-2 py-0.5 bg-green-500/20 text-green-400 rounded text-xs font-medium">
-                            Current
-                          </span>
-                        </div>
+                        <span className="inline-flex items-center px-2 py-0.5 bg-green-500/10 text-green-500 rounded text-xs font-medium">
+                          Current
+                        </span>
                       )}
                     </div>
                   </div>
                   {exp.description && (
-                    <p className="text-muted mt-2 text-sm">{exp.description}</p>
+                    <p className="text-muted mt-2 text-sm leading-relaxed">{exp.description}</p>
                   )}
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-6 bg-background/50 rounded-lg border-2 border-dashed border-muted/30">
-              <p className="text-muted">No experience listed.</p>
-            </div>
+            <p className="text-muted italic">No experience listed.</p>
           )}
         </section>
       </div>

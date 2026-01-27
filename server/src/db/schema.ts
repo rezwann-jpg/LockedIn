@@ -195,13 +195,13 @@ export const jobs = pgTable(
     description: text('description').notNull(),
     requirements: text('requirements'),
     responsibilities: text('responsibilities'),
-    location: text('location'),
+    location: text('location').notNull(), // ADDED notNull
     companyId: integer('company_id')
       .notNull()
       .references(() => companies.id, { onDelete: 'cascade' }),
     categoryId: integer('category_id').references(() => categories.id, {
       onDelete: 'set null',
-    }), // ✅ Fixed: removed notNull() to allow SET NULL
+    }),
     jobType: jobTypeEnum('job_type').notNull().default('full_time'),
     experienceLevel: experienceLevelEnum('experience_level').default('mid'),
     salaryMin: integer('salary_min'),
@@ -211,7 +211,7 @@ export const jobs = pgTable(
     viewsCount: integer('views_count').notNull().default(0),
     applicationCount: integer('application_count').notNull().default(0),
     isActive: boolean('is_active').notNull().default(true),
-    postedAt: timestamp('posted_at').notNull().defaultNow(),
+    postedAt: timestamp('posted_at').notNull().defaultNow(), // FIXED: Added defaultNow()
     expiresAt: timestamp('expires_at'),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
   },
@@ -309,11 +309,7 @@ export const savedJobs = pgTable(
 // RELATIONS
 // ============================================================================
 
-export const usersRelations = relations(users, ({ one, many }) => ({
-  company: one(companies, {
-    fields: [users.id],
-    references: [companies.userId],
-  }),
+export const usersRelations = relations(users, ({ many }) => ({
   educations: many(educations),
   experiences: many(experiences),
   userSkills: many(userSkills),

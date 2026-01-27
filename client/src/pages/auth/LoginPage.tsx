@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AxiosError } from 'axios';
 
+import api from '../../lib/api';
 import { useAuth } from '../../context/useAuth';
 
 export default function LoginPage() {
@@ -19,7 +20,26 @@ export default function LoginPage() {
 
     try {
       await login({ email, password });
-      navigate('/profile/setup');
+
+      const res = await api.get('/profile');
+      const userRes = res.data.user;
+
+      if (userRes.role === 'company') {
+        try {
+          await api.get('/company/profile');
+          navigate('/employer/dashboard');
+        } catch (err) {
+          if (err instanceof AxiosError && err.response?.status === 404) {
+            navigate('/onboarding/company-profile', {
+              state: { redirectAfter: '/employer/dashboard' }
+            });
+          } else {
+            navigate('/employer/dashboard');
+          }
+        }
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       if (err instanceof AxiosError) {
         setError(err.response?.data?.error ?? 'Login failed');

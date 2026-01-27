@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AxiosError } from 'axios';
 
+import api from '../../lib/api';
 import { useAuth } from '../../context/useAuth';
 
 type Role = 'job_seeker' | 'company';
@@ -44,7 +45,23 @@ export default function SignupPage() {
 
     try {
       await signup(payload);
-      navigate('/profile/setup');
+
+      if (role === 'company') {
+        try {
+          await api.get('/company/profile');
+          navigate('/employer/dashboard');
+        } catch (err) {
+          if (err instanceof AxiosError && err.response?.status === 404) {
+            navigate('/onboarding/company-profile', {
+              state: { redirectAfter: '/employer/dashboard' }
+            });
+          } else {
+            navigate('/employer/dashboard');
+          }
+        }
+      } else {
+        navigate('/profile/setup');
+      }
     } catch (err) {
       if (err instanceof AxiosError) {
         setError(err.response?.data?.error ?? 'Signup failed');

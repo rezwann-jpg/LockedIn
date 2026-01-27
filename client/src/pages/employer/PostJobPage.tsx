@@ -1,0 +1,231 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../../lib/api';
+import { ArrowLeft, Loader2, Info } from 'lucide-react';
+import { AxiosError } from 'axios';
+
+export default function PostJobPage() {
+    const navigate = useNavigate();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const [formData, setFormData] = useState({
+        title: '',
+        jobType: 'full_time',
+        location: '',
+        remote: false,
+        salaryMin: '',
+        salaryMax: '',
+        description: '',
+        requirements: '',
+        responsibilities: '',
+    });
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        setError(null);
+
+        // Basic validation
+        if (!formData.title || !formData.description) {
+            setError('Please fill in all required fields.');
+            setIsSubmitting(false);
+            return;
+        }
+
+        try {
+            await api.post('/company/jobs', {
+                ...formData,
+                salaryMin: formData.salaryMin ? parseInt(formData.salaryMin) : null,
+                salaryMax: formData.salaryMax ? parseInt(formData.salaryMax) : null,
+                remote: formData.remote
+            });
+            navigate('/employer/dashboard');
+        } catch (err) {
+            console.error(err);
+            if (err instanceof AxiosError) {
+                setError(err.response?.data?.error || 'Failed to post job. Please try again.');
+            } else {
+                setError('An unexpected error occurred.');
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-background py-10 px-4">
+            <div className="max-w-3xl mx-auto">
+                <button
+                    onClick={() => navigate(-1)}
+                    className="flex items-center gap-2 text-muted hover:text-text transition-colors mb-6"
+                >
+                    <ArrowLeft size={18} />
+                    <span>Back to Dashboard</span>
+                </button>
+
+                <div className="bg-secondary rounded-xl border border-muted/30 shadow-sm overflow-hidden">
+                    <div className="p-6 border-b border-muted/30">
+                        <h1 className="text-2xl font-bold text-text">Post a New Job</h1>
+                        <p className="text-muted mt-1">Reach thousands of job seekers by creating a detailed job listing.</p>
+                    </div>
+
+                    {error && (
+                        <div className="mx-6 mt-6 p-4 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg flex items-center gap-3">
+                            <Info size={18} />
+                            {error}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="p-6 space-y-8">
+                        {/* Basic Info */}
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-semibold text-text border-l-4 border-primary pl-3">Basic Information</h3>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="col-span-2">
+                                    <label className="block text-sm font-medium text-muted mb-1.5">Job Title <span className="text-red-400">*</span></label>
+                                    <input
+                                        type="text"
+                                        name="title"
+                                        value={formData.title}
+                                        onChange={handleChange}
+                                        placeholder="e.g. Senior Frontend Engineer"
+                                        className="w-full px-4 py-2.5 bg-background border border-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-text"
+                                        required
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-muted mb-1.5">Job Type</label>
+                                    <select
+                                        name="jobType"
+                                        value={formData.jobType}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-2.5 bg-background border border-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-text"
+                                    >
+                                        <option value="full_time">Full Time</option>
+                                        <option value="part_time">Part Time</option>
+                                        <option value="contract">Contract</option>
+                                        <option value="internship">Internship</option>
+                                        <option value="freelance">Freelance</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-muted mb-1.5">Location</label>
+                                    <input
+                                        type="text"
+                                        name="location"
+                                        value={formData.location}
+                                        onChange={handleChange}
+                                        placeholder="e.g. San Francisco, CA"
+                                        className="w-full px-4 py-2.5 bg-background border border-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-text"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Compensation */}
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-semibold text-text border-l-4 border-primary pl-3">Compensation</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-muted mb-1.5">Min Salary</label>
+                                    <input
+                                        type="number"
+                                        name="salaryMin"
+                                        value={formData.salaryMin}
+                                        onChange={handleChange}
+                                        placeholder="e.g. 100000"
+                                        className="w-full px-4 py-2.5 bg-background border border-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-text"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-muted mb-1.5">Max Salary</label>
+                                    <input
+                                        type="number"
+                                        name="salaryMax"
+                                        value={formData.salaryMax}
+                                        onChange={handleChange}
+                                        placeholder="e.g. 150000"
+                                        className="w-full px-4 py-2.5 bg-background border border-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-text"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Details */}
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-semibold text-text border-l-4 border-primary pl-3">Job Details</h3>
+
+                            <div>
+                                <label className="block text-sm font-medium text-muted mb-1.5">Description <span className="text-red-400">*</span></label>
+                                <textarea
+                                    name="description"
+                                    value={formData.description}
+                                    onChange={handleChange}
+                                    rows={4}
+                                    placeholder="Describe the role and the team..."
+                                    className="w-full px-4 py-2.5 bg-background border border-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-text resize-y"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-muted mb-1.5">Requirements</label>
+                                <textarea
+                                    name="requirements"
+                                    value={formData.requirements}
+                                    onChange={handleChange}
+                                    rows={3}
+                                    placeholder="What skills are required?"
+                                    className="w-full px-4 py-2.5 bg-background border border-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-text resize-y"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-muted mb-1.5">Responsibilities</label>
+                                <textarea
+                                    name="responsibilities"
+                                    value={formData.responsibilities}
+                                    onChange={handleChange}
+                                    rows={3}
+                                    placeholder="What will the candidate do?"
+                                    className="w-full px-4 py-2.5 bg-background border border-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-text resize-y"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="pt-4 border-t border-muted/30 flex justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={() => navigate(-1)}
+                                className="px-6 py-2.5 border border-muted text-muted hover:bg-background/50 hover:text-text rounded-lg transition-colors font-medium"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-accent transition-colors font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 className="animate-spin" size={18} />
+                                        Publishing...
+                                    </>
+                                ) : 'Publish Job'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    );
+}
