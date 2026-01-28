@@ -74,7 +74,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
       const skillArraySql = skillNames.length > 0
         ? sql`ARRAY[${sql.join(skillNames.map(s => sql`${s}`), sql`, `)}]::TEXT[]`
         : sql`ARRAY[]::TEXT[]`;
-      await db.execute(sql`CALL update_user_skills(${userId}, ${skillArraySql})`);
+      await db.execute(sql`CALL update_user_skills(${userId}::INT, ${skillArraySql})`);
     }
 
     // Update Educations (Simple clear and insert approach)

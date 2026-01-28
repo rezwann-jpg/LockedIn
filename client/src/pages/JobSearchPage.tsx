@@ -65,11 +65,19 @@ export default function JobSearchPage() {
     );
 
     return (
-        <div className="min-h-screen bg-background p-4 md:p-8">
-            <div className="max-w-5xl mx-auto">
-                <header className="mb-10 text-center">
-                    <h1 className="text-4xl font-bold text-text mb-4">Explore Opportunities</h1>
-                    <p className="text-muted text-lg">Find your next career move with LockedIn</p>
+        <div className="bg-background py-16 px-4 md:px-8 relative overflow-hidden">
+            {/* Decorative background elements */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none opacity-50">
+                <div className="absolute top-[5%] right-[5%] w-64 h-64 bg-primary/5 rounded-full blur-[80px]"></div>
+                <div className="absolute bottom-[20%] left-[5%] w-80 h-80 bg-accent/5 rounded-full blur-[100px]"></div>
+            </div>
+
+            <div className="max-w-6xl mx-auto relative z-10">
+                <header className="mb-12 text-center">
+                    <h1 className="text-4xl md:text-5xl font-extrabold text-text mb-4 tracking-tight">
+                        Explore <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Opportunities</span>
+                    </h1>
+                    <p className="text-muted text-lg font-medium max-w-2xl mx-auto">Find your next career move with LockedIn's focused job matching.</p>
                 </header>
 
                 <div className="flex flex-col md:flex-row gap-4 mb-8">

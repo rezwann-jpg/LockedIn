@@ -2,110 +2,58 @@ import { useAuth } from '../context/useAuth';
 import { Link } from 'react-router-dom';
 
 export default function HomePage() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <header className="py-6 px-4 sm:px-6 lg:px-8 border-b border-muted bg-background">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-primary">LockedIn</h1>
-
-          <nav>
-            {user ? (
-              <div className="flex items-center gap-4">
-                {user.role === 'job_seeker' ? (
-                  <Link
-                    to="/profile"
-                    className="px-4 py-2 text-text hover:text-primary transition-colors"
-                  >
-                    My Profile
-                  </Link>
-                ) : (
-                  <Link
-                    to="/jobs/post"
-                    className="px-4 py-2 text-text hover:text-primary transition-colors"
-                  >
-                    Post a Job
-                  </Link>
-                )}
-
-                <Link
-                  to="/profile"
-                  className="text-text hover:text-primary"
-                >
-                  {user.name}
-                </Link>
-
-                <button
-                  type="button"
-                  onClick={logout}
-                  className="px-3 py-1 text-sm text-muted hover:text-primary transition-colors"
-                >
-                  Sign Out
-                </button>
-              </div>
-            ) : (
-              <div>
-                <Link
-                  to="/login"
-                  className="px-4 py-2 text-text hover:text-primary transition-colors"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  to="/signup"
-                  className="ml-3 px-4 py-2 bg-primary text-white rounded-md hover:bg-accent transition-colors"
-                >
-                  Get Started
-                </Link>
-              </div>
-            )}
-          </nav>
+    <div className="bg-background">
+      <main className="min-h-[calc(100vh-64px-200px)] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-20 relative overflow-hidden">
+        {/* Decorative background elements */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl">
+          <div className="absolute top-[10%] left-[10%] w-72 h-72 bg-primary/10 rounded-full blur-[100px] animate-pulse"></div>
+          <div className="absolute bottom-[10%] right-[10%] w-96 h-96 bg-accent/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '1s' }}></div>
         </div>
-      </header>
 
-      <main className="flex-grow flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-background">
-        <div className="max-w-3xl text-center">
-          <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-text">
+        <div className="max-w-3xl text-center relative z-10">
+          <h2 className="text-5xl sm:text-7xl font-extrabold tracking-tight text-text mb-8">
             Find Your Next Role.
             <br />
-            <span className="text-primary">Stay Locked In.</span>
+            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Stay Locked In.</span>
           </h2>
-          <p className="mt-6 text-lg text-muted max-w-xl mx-auto">
+          <p className="mt-6 text-xl text-muted max-w-2xl mx-auto leading-relaxed">
             A job board built for focus — detailed company profiles, smart matching, and zero distractions.
           </p>
 
           {user ? (
             user.role === 'job_seeker' ? (
-              <div className="mt-8">
+              <div className="mt-12">
                 <Link
                   to="/jobs"
-                  className="px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-accent transition-colors"
+                  className="px-8 py-4 bg-primary text-white font-bold rounded-xl hover:bg-accent transition-all transform hover:scale-105 shadow-xl shadow-primary/25"
                 >
                   Browse Jobs
                 </Link>
               </div>
             ) : (
-              <div className="mt-8">
+              <div className="mt-12">
                 <Link
                   to="/jobs/post"
-                  className="px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-accent transition-colors"
+                  className="px-8 py-4 bg-primary text-white font-bold rounded-xl hover:bg-accent transition-all transform hover:scale-105 shadow-xl shadow-primary/25"
                 >
                   Post a New Job
                 </Link>
               </div>
             )
           ) : (
-            <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
+            <div className="mt-12 flex flex-col sm:flex-row justify-center gap-6">
               <Link
                 to="/signup"
-                className="px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-accent transition-colors"
+                className="px-8 py-4 bg-primary text-white font-bold rounded-xl hover:bg-accent transition-all transform hover:scale-105 shadow-xl shadow-primary/25"
               >
                 Get Started
               </Link>
               <Link
                 to="/jobs"
-                className="px-6 py-3 bg-secondary text-text font-medium rounded-lg border border-muted hover:bg-muted transition-colors"
+                className="px-8 py-4 bg-secondary text-text font-bold rounded-xl border border-muted/50 hover:bg-muted/50 transition-all transform hover:scale-105"
               >
                 Browse Jobs
               </Link>
@@ -113,11 +61,6 @@ export default function HomePage() {
           )}
         </div>
       </main>
-
-      <footer className="bg-secondary border-t border-muted">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        </div>
-      </footer>
     </div>
   );
 }

@@ -80,7 +80,7 @@ export const createJob = async (req: AuthRequest, res: Response) => {
             const skillNames = req.body.skills.filter((s: any) => typeof s === 'string');
             if (skillNames.length > 0) {
                 const skillArraySql = sql`ARRAY[${sql.join(skillNames.map((s: string) => sql`${s}`), sql`, `)}]::TEXT[]`;
-                await db.execute(sql`CALL update_job_skills(${newJob.id}, ${skillArraySql})`);
+                await db.execute(sql`CALL update_job_skills(${newJob.id}::INT, ${skillArraySql})`);
             }
         }
 
@@ -209,7 +209,7 @@ export const applyToJob = async (req: AuthRequest, res: Response) => {
         }
 
         // Check graduation status via DB function
-        const graduationQuery = sql`SELECT has_user_graduated(${userId}) as graduated`;
+        const graduationQuery = sql`SELECT has_user_graduated(${userId}::INT) as graduated`;
         const gradRows = (await db.execute(graduationQuery)).rows;
         const hasGraduated = gradRows[0]?.graduated;
 

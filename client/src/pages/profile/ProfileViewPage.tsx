@@ -9,7 +9,6 @@ import {
   MapPin,
   Calendar,
   Edit2,
-  LogOut,
   User as UserIcon,
   Mail,
   Building,
@@ -159,295 +158,299 @@ export default function ProfileViewPage() {
   const isProfileEmpty = skills.length === 0 && educations.length === 0 && experiences.length === 0;
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-start mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-text mb-1">My Profile</h1>
-            <p className="text-muted">Manage your professional information</p>
-          </div>
-          <button
-            onClick={() => logout()}
-            className="flex items-center gap-2 px-4 py-2 text-muted hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
-          >
-            <LogOut size={18} />
-            Sign Out
-          </button>
+    <div className="min-h-screen bg-background pb-20">
+      {/* Hero Section */}
+      <div className="relative pt-20 pb-16 bg-gradient-to-br from-secondary/50 via-background to-background">
+        <div className="absolute inset-0 -z-10 overflow-hidden">
+          <div className="absolute top-[20%] left-[10%] w-[500px] h-[500px] bg-primary/5 blur-[120px] rounded-full"></div>
+          <div className="absolute bottom-[0%] right-[10%] w-[400px] h-[400px] bg-primary/10 blur-[100px] rounded-full"></div>
         </div>
 
-        {error && (
-          <div className="mb-6 flex items-center gap-3 rounded-lg border border-red-500/50 bg-red-500/10 px-4 py-3 text-red-400">
-            <span>⚠️</span>
-            <span>{error}</span>
-          </div>
-        )}
-
-        <div className="bg-secondary p-6 rounded-xl border border-muted/30 mb-8 shadow-sm">
-          <div className="flex items-start gap-6">
-            <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center text-3xl font-bold text-primary">
-              {user.name.charAt(0).toUpperCase()}
-            </div>
-
-            <div className="flex-1">
-              <h2 className="text-2xl font-semibold text-text mb-1">{user.name}</h2>
-              <div className="flex items-center gap-2 text-muted mb-3">
-                <Mail size={16} />
-                <span>{user.email}</span>
-              </div>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 text-primary border border-primary/20 rounded-full text-sm font-medium">
-                {user.role === 'job_seeker' ? <UserIcon size={14} /> : <Building size={14} />}
-                {user.role === 'job_seeker' ? 'Job Seeker' : 'Company'}
-              </span>
-            </div>
-
-            <button
-              onClick={() => navigate('/profile/setup')}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-accent transition-colors font-medium shadow-sm"
-            >
-              <Edit2 size={16} />
-              Edit Profile
-            </button>
-          </div>
-        </div>
-
-        {isProfileEmpty && (
-          <div className="bg-secondary rounded-xl border border-dashed border-muted p-10 text-center mb-8">
-            <div className="inline-flex items-center justify-center p-4 bg-background rounded-full mb-4">
-              <Edit2 size={32} className="text-muted" />
-            </div>
-            <h3 className="text-xl font-semibold text-text mb-2">Complete Your Profile</h3>
-            <p className="text-muted mb-6 max-w-md mx-auto">
-              Add your skills, education, and work experience to help employers find you and stand out from other candidates.
-            </p>
-            <button
-              onClick={() => navigate('/profile/setup')}
-              className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-accent transition-colors font-medium"
-            >
-              Get Started
-            </button>
-          </div>
-        )}
-
-        <section className="bg-secondary rounded-xl border border-muted/30 p-6 mb-6 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-500/10 text-blue-500 rounded-lg">
-                <Award size={20} />
-              </div>
-              <h3 className="text-xl font-semibold text-text">Skills</h3>
-            </div>
-            <button
-              onClick={() => navigate('/profile/setup')}
-              className="text-primary hover:text-accent text-sm font-medium transition-colors p-2 hover:bg-background rounded"
-            >
-              <Edit2 size={16} />
-            </button>
-          </div>
-
-          {skills.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {skills.map((skill, i) => (
-                <span
-                  key={`${skill}-${i}`}
-                  className="px-3 py-1.5 bg-background border border-muted/30 text-text rounded-md text-sm font-medium hover:border-primary/50 transition-colors cursor-default"
-                >
-                  {skill}
-                </span>
-              ))}
-            </div>
-          ) : (
-            <p className="text-muted italic">No skills added yet.</p>
-          )}
-        </section>
-
-        {user.role === 'job_seeker' && (
-          <section className="bg-secondary rounded-xl border border-muted/30 p-6 mb-6 shadow-sm overflow-hidden relative">
-            <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
-              <Sparkles size={120} />
-            </div>
-
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-500/10 text-amber-500 rounded-lg">
-                  <TrendingUp size={20} />
-                </div>
-                <h3 className="text-xl font-semibold text-text">Recommended Jobs</h3>
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="flex flex-col md:flex-row gap-10 items-center md:items-end">
+            <div className="relative group">
+              <div className="w-32 h-32 md:w-40 md:h-40 bg-primary/20 rounded-3xl flex items-center justify-center text-5xl font-bold text-primary shadow-2xl shadow-primary/20 transform group-hover:scale-[1.02] transition-transform duration-300">
+                {user.name.charAt(0).toUpperCase()}
               </div>
               <button
-                onClick={() => navigate('/jobs')}
-                className="text-primary hover:text-accent text-sm font-medium transition-colors flex items-center gap-1"
+                onClick={() => navigate('/profile/setup')}
+                className="absolute -bottom-2 -right-2 p-3 bg-primary text-white rounded-2xl shadow-lg shadow-primary/30 hover:bg-accent transition-all active:scale-95"
               >
-                Browse All <ArrowRight size={14} />
+                <Edit2 size={18} />
               </button>
             </div>
 
-            {matchingLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="animate-spin text-primary" size={24} />
+            <div className="flex-1 text-center md:text-left space-y-4">
+              <div className="space-y-1">
+                <h1 className="text-4xl md:text-5xl font-bold text-text tracking-tight">{user.name}</h1>
+                <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 text-muted pt-2">
+                  <span className="flex items-center gap-2 px-4 py-1.5 bg-background/50 border border-muted/20 rounded-full text-sm font-medium backdrop-blur-sm">
+                    {user.role === 'job_seeker' ? <UserIcon size={14} /> : <Building size={14} />}
+                    {user.role === 'job_seeker' ? 'Job Seeker' : 'Company'}
+                  </span>
+                  <span className="flex items-center gap-2 py-1.5 text-sm">
+                    <Mail size={16} className="text-primary/70" />
+                    {user.email}
+                  </span>
+                </div>
               </div>
-            ) : matchedJobs.length > 0 ? (
-              <div className="grid gap-4">
-                {matchedJobs.map((job) => (
+            </div>
+
+            <div className="hidden lg:flex flex-col items-end gap-3 self-center">
+              <div className="text-right">
+                <p className="text-xs font-bold text-muted uppercase tracking-[0.2em] mb-1">Profile Strength</p>
+                <div className="w-48 h-2 bg-muted/20 rounded-full overflow-hidden">
                   <div
-                    key={job.id}
-                    onClick={() => navigate(`/jobs/${job.id}`)}
-                    className="group bg-background p-4 rounded-lg border border-muted/20 hover:border-primary/40 transition-all cursor-pointer shadow-sm hover:shadow-md"
+                    className="h-full bg-primary"
+                    style={{ width: isProfileEmpty ? '20%' : '85%' }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-6 mt-12">
+        {error && (
+          <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl text-sm flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
+            <span className="shrink-0 text-lg">⚠️</span>
+            {error}
+          </div>
+        )}
+
+        <div className="grid lg:grid-cols-12 gap-16">
+          {/* Main Content Area */}
+          <div className="lg:col-span-8 space-y-20">
+            {/* Skills Section */}
+            <section className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="p-2.5 bg-blue-500/10 text-blue-500 rounded-2xl">
+                  <Award size={24} />
+                </div>
+                <h2 className="text-2xl font-bold text-text tracking-tight">Expertise & Skills</h2>
+                <div className="h-[1px] flex-1 bg-gradient-to-r from-muted/30 to-transparent ml-4"></div>
+              </div>
+
+              {skills.length > 0 ? (
+                <div className="flex flex-wrap gap-3">
+                  {skills.map((skill, i) => (
+                    <span
+                      key={`${skill}-${i}`}
+                      className="px-5 py-2.5 bg-secondary/30 border border-muted/10 text-text rounded-2xl text-sm font-medium hover:border-primary/50 hover:bg-primary/5 transition-all cursor-default shadow-sm"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div className="group border-2 border-dashed border-muted/20 rounded-3xl p-10 text-center hover:border-primary/30 transition-colors cursor-pointer" onClick={() => navigate('/profile/setup')}>
+                  <Sparkles className="mx-auto text-muted/30 mb-4 group-hover:text-primary/50 transition-colors" size={40} />
+                  <p className="text-muted text-lg">Add your skills to showcase your expertise.</p>
+                </div>
+              )}
+            </section>
+
+            {/* Experience Section */}
+            <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+              <div className="flex items-center gap-4 mb-10">
+                <div className="p-2.5 bg-green-500/10 text-green-500 rounded-2xl">
+                  <Briefcase size={24} />
+                </div>
+                <h2 className="text-2xl font-bold text-text tracking-tight">Work Experience</h2>
+                <div className="h-[1px] flex-1 bg-gradient-to-r from-muted/30 to-transparent ml-4"></div>
+              </div>
+
+              {experiences.length > 0 ? (
+                <div className="space-y-12 ml-4">
+                  {experiences.map((exp, idx) => (
+                    <div key={exp.id} className="relative pl-12 group">
+                      {/* Timeline line */}
+                      {idx !== experiences.length - 1 && (
+                        <div className="absolute left-[11px] top-8 bottom-[-48px] w-[2px] bg-muted/20"></div>
+                      )}
+
+                      {/* Timeline dot */}
+                      <div className="absolute left-0 top-1.5 w-6 h-6 rounded-full border-4 border-background bg-primary group-hover:scale-110 transition-transform"></div>
+
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap justify-between items-start gap-4">
+                          <div>
+                            <h3 className="text-xl font-bold text-text group-hover:text-primary transition-colors">{exp.position}</h3>
+                            <div className="flex items-center gap-3 text-lg text-text/80 mt-1">
+                              <span className="font-semibold">{exp.company}</span>
+                              {exp.location && (
+                                <>
+                                  <span className="text-muted/40">•</span>
+                                  <span className="flex items-center gap-1.5 text-muted text-sm font-medium">
+                                    <MapPin size={16} />
+                                    {exp.location}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end">
+                            <span className="text-sm font-bold text-muted uppercase tracking-wider flex items-center gap-2">
+                              <Calendar size={14} className="text-primary/70" />
+                              {formatDate(exp.startDate)} — {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}
+                            </span>
+                            {exp.currentlyWorking && (
+                              <span className="mt-2 text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2.5 py-1 rounded-lg">
+                                Current
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {exp.description && (
+                          <p className="text-muted mt-4 text-base leading-relaxed max-w-2xl">{exp.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="border-2 border-dashed border-muted/20 rounded-3xl p-10 text-center">
+                  <Briefcase className="mx-auto text-muted/30 mb-4" size={40} />
+                  <p className="text-muted text-lg">Your professional history will appear here.</p>
+                </div>
+              )}
+            </section>
+
+            {/* Education Section */}
+            <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+              <div className="flex items-center gap-4 mb-10">
+                <div className="p-2.5 bg-purple-500/10 text-purple-500 rounded-2xl">
+                  <GraduationCap size={24} />
+                </div>
+                <h2 className="text-2xl font-bold text-text tracking-tight">Education</h2>
+                <div className="h-[1px] flex-1 bg-gradient-to-r from-muted/30 to-transparent ml-4"></div>
+              </div>
+
+              {educations.length > 0 ? (
+                <div className="space-y-10 ml-4">
+                  {educations.map((edu, idx) => (
+                    <div key={edu.id} className="relative pl-12 group">
+                      {idx !== educations.length - 1 && (
+                        <div className="absolute left-[11px] top-8 bottom-[-40px] w-[2px] bg-muted/20"></div>
+                      )}
+
+                      <div className="absolute left-0 top-1.5 w-6 h-6 rounded-full border-4 border-background bg-purple-500 group-hover:scale-110 transition-transform"></div>
+
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap justify-between items-start gap-4">
+                          <div>
+                            <h3 className="text-xl font-bold text-text group-hover:text-purple-400 transition-colors uppercase tracking-tight">{edu.school}</h3>
+                            <p className="text-lg font-medium text-text/80 mt-1">
+                              {edu.degree}
+                              {edu.fieldOfStudy && (
+                                <>
+                                  <span className="mx-2 text-muted/40">—</span>
+                                  {edu.fieldOfStudy}
+                                </>
+                              )}
+                            </p>
+                          </div>
+                          <span className="text-sm font-bold text-muted uppercase tracking-wider flex items-center gap-2">
+                            <Calendar size={14} className="text-purple-400/70" />
+                            {formatDate(edu.startDate)} — {formatDate(edu.endDate) || 'Present'}
+                          </span>
+                        </div>
+                        {edu.description && (
+                          <p className="text-muted mt-3 text-base leading-relaxed max-w-2xl">{edu.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="border-2 border-dashed border-muted/20 rounded-3xl p-10 text-center">
+                  <GraduationCap className="mx-auto text-muted/30 mb-4" size={40} />
+                  <p className="text-muted text-lg">Showcase your academic background.</p>
+                </div>
+              )}
+            </section>
+          </div>
+
+          {/* Sidebar Area */}
+          <aside className="lg:col-span-4 space-y-12">
+            {user.role === 'job_seeker' && (
+              <div className="sticky top-24">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-amber-500/10 text-amber-500 rounded-2xl">
+                      <TrendingUp size={20} />
+                    </div>
+                    <h3 className="text-xl font-bold text-text tracking-tight">Matched Jobs</h3>
+                  </div>
+                  <button
+                    onClick={() => navigate('/jobs')}
+                    className="group flex items-center gap-2 text-primary text-sm font-bold uppercase tracking-widest hover:text-accent transition-colors"
                   >
-                    <div className="flex justify-between items-start gap-4">
-                      <div className="flex gap-4">
-                        <div className="w-12 h-12 bg-secondary rounded flex items-center justify-center text-lg font-bold text-muted overflow-hidden">
+                    All <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                  </button>
+                </div>
+
+                {matchingLoading ? (
+                  <div className="flex flex-col items-center justify-center py-20 gap-4">
+                    <Loader2 className="animate-spin text-primary" size={32} />
+                    <p className="text-sm text-muted font-medium">Crunching matches...</p>
+                  </div>
+                ) : matchedJobs.length > 0 ? (
+                  <div className="space-y-6">
+                    {matchedJobs.slice(0, 3).map((job) => (
+                      <div
+                        key={job.id}
+                        onClick={() => navigate(`/jobs/${job.id}`)}
+                        className="group flex gap-4 p-4 -mx-4 rounded-3xl hover:bg-secondary/30 transition-all cursor-pointer"
+                      >
+                        <div className="w-14 h-14 bg-background border border-muted/20 rounded-2xl flex items-center justify-center text-xl font-bold text-muted overflow-hidden shrink-0 shadow-sm transition-transform group-hover:scale-105">
                           {job.company_logo ? (
                             <img src={job.company_logo} alt={job.company_name} className="w-full h-full object-cover" />
                           ) : (
                             job.company_name.charAt(0)
                           )}
                         </div>
-                        <div>
-                          <h4 className="font-semibold text-text group-hover:text-primary transition-colors line-clamp-1">{job.title}</h4>
-                          <p className="text-sm text-muted">{job.company_name}</p>
-                          <div className="flex items-center gap-3 mt-2">
+                        <div className="flex-1 space-y-1.5 min-w-0">
+                          <h4 className="font-bold text-text text-base group-hover:text-primary transition-colors truncate">
+                            {job.title}
+                          </h4>
+                          <p className="text-sm text-muted font-medium truncate">{job.company_name}</p>
+                          <div className="flex items-center justify-between gap-4 mt-2">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                              {Math.round(job.match_percentage)}% Match
+                            </span>
                             {job.salary_min && (
-                              <span className="text-xs font-medium text-green-500 bg-green-500/10 px-2 py-0.5 rounded">
-                                ${job.salary_min.toLocaleString()} - ${job.salary_max?.toLocaleString()}
+                              <span className="text-[10px] font-bold text-green-500 bg-green-500/10 px-2 py-0.5 rounded-md">
+                                ${Math.round(job.salary_min / 1000)}k+
                               </span>
                             )}
-                            <span className="text-xs text-muted">
-                              Matched {job.matching_skills}/{job.total_skills} skills
-                            </span>
                           </div>
                         </div>
                       </div>
-                      <div className="text-right flex flex-col items-end gap-1">
-                        <div className="text-lg font-bold text-primary">
-                          {Math.round(job.match_percentage)}%
-                        </div>
-                        <span className="text-[10px] text-muted uppercase tracking-wider font-bold">Match Score</span>
-                      </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 bg-background/30 rounded-lg border border-dashed border-muted/20">
-                <Sparkles className="mx-auto text-muted/30 mb-2" size={32} />
-                <p className="text-muted text-sm">Add more skills to see personalized job recommendations!</p>
+                ) : (
+                  <div className="text-center py-12 px-6 bg-secondary/20 rounded-3xl border border-dashed border-muted/20">
+                    <Sparkles className="mx-auto text-muted/30 mb-4" size={32} />
+                    <p className="text-muted text-sm leading-relaxed">Add more skills to unlock personalized career opportunities.</p>
+                  </div>
+                )}
               </div>
             )}
-          </section>
-        )}
 
-        <section className="bg-secondary rounded-xl border border-muted/30 p-6 mb-6 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-500/10 text-purple-500 rounded-lg">
-                <GraduationCap size={20} />
-              </div>
-              <h3 className="text-xl font-semibold text-text">Education</h3>
+            <div className="p-8 bg-primary/5 rounded-3xl border border-primary/10">
+              <h4 className="font-bold text-text mb-2">Want a new look?</h4>
+              <p className="text-sm text-muted mb-6 leading-relaxed">Keep your profile updated to increase your visibility by up to 5x.</p>
+              <button
+                onClick={() => navigate('/profile/setup')}
+                className="w-full py-3 bg-background border border-primary/20 text-primary rounded-xl font-bold text-sm hover:bg-primary hover:text-white transition-all active:scale-95"
+              >
+                Refine Profile
+              </button>
             </div>
-            <button
-              onClick={() => navigate('/profile/setup')}
-              className="text-primary hover:text-accent text-sm font-medium transition-colors p-2 hover:bg-background rounded"
-            >
-              <Edit2 size={16} />
-            </button>
-          </div>
-
-          {educations.length > 0 ? (
-            <div className="space-y-4">
-              {educations.map((edu) => (
-                <div
-                  key={edu.id}
-                  className="group relative pl-4 border-l-2 border-muted/30 hover:border-primary/50 transition-colors"
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h4 className="font-semibold text-text text-lg">{edu.school}</h4>
-                      <p className="text-primary font-medium">
-                        {edu.degree}
-                        {edu.fieldOfStudy && ` in ${edu.fieldOfStudy}`}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-sm text-muted">
-                      <Calendar size={14} />
-                      <span>
-                        {formatDate(edu.startDate)} — {formatDate(edu.endDate) || 'Present'}
-                      </span>
-                    </div>
-                  </div>
-                  {edu.description && (
-                    <p className="text-muted mt-2 text-sm">{edu.description}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-muted italic">No education listed.</p>
-          )}
-        </section>
-
-        <section className="bg-secondary rounded-xl border border-muted/30 p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-500/10 text-green-500 rounded-lg">
-                <Briefcase size={20} />
-              </div>
-              <h3 className="text-xl font-semibold text-text">Work Experience</h3>
-            </div>
-            <button
-              onClick={() => navigate('/profile/setup')}
-              className="text-primary hover:text-accent text-sm font-medium transition-colors p-2 hover:bg-background rounded"
-            >
-              <Edit2 size={16} />
-            </button>
-          </div>
-
-          {experiences.length > 0 ? (
-            <div className="space-y-6">
-              {experiences.map((exp) => (
-                <div
-                  key={exp.id}
-                  className="group relative pl-4 border-l-2 border-muted/30 hover:border-primary/50 transition-colors"
-                >
-                  <div className="flex items-start justify-between mb-1">
-                    <div>
-                      <h4 className="font-semibold text-text text-lg">{exp.position}</h4>
-                      <div className="flex items-center gap-2">
-                        <span className="text-primary font-medium">{exp.company}</span>
-                        {exp.location && (
-                          <>
-                            <span className="text-muted">•</span>
-                            <span className="text-muted text-sm flex items-center gap-1">
-                              <MapPin size={12} />
-                              {exp.location}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="flex items-center justify-end gap-1.5 text-sm text-muted mb-1">
-                        <Calendar size={14} />
-                        <span>
-                          {formatDate(exp.startDate)} — {exp.currentlyWorking ? 'Present' : formatDate(exp.endDate)}
-                        </span>
-                      </div>
-                      {exp.currentlyWorking && (
-                        <span className="inline-flex items-center px-2 py-0.5 bg-green-500/10 text-green-500 rounded text-xs font-medium">
-                          Current
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  {exp.description && (
-                    <p className="text-muted mt-2 text-sm leading-relaxed">{exp.description}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-muted italic">No experience listed.</p>
-          )}
-        </section>
+          </aside>
+        </div>
       </div>
     </div>
   );

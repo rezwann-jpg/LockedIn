@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../../lib/api';
-import { Building2, Info, Loader2, ArrowRight } from 'lucide-react';
+import { Building2, Loader2, ArrowRight } from 'lucide-react';
 import { AxiosError } from 'axios';
+import { useAuth } from '../../context/useAuth';
 
 export default function CompanyOnboardingPage() {
     const navigate = useNavigate();
     const location = useLocation();
+    const { user } = useAuth();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -18,6 +20,14 @@ export default function CompanyOnboardingPage() {
         website: '',
         description: '',
     });
+
+    useEffect(() => {
+        // Carry over company name from navigation state or user profile
+        const carriedCompanyName = location.state?.companyName || (user?.role === 'company' ? user.name : '');
+        if (carriedCompanyName) {
+            setFormData(prev => ({ ...prev, name: carriedCompanyName }));
+        }
+    }, [location.state, user]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -46,58 +56,64 @@ export default function CompanyOnboardingPage() {
     };
 
     return (
-        <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-            <div className="w-full max-w-2xl">
-                <div className="text-center mb-10">
-                    <div className="inline-flex items-center justify-center p-4 bg-primary/10 text-primary rounded-full mb-4">
-                        <Building2 size={32} />
+        <div className="min-h-[calc(100vh-64px-200px)] py-12 px-4 relative overflow-hidden bg-background">
+            {/* Decorative background elements */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
+                <div className="absolute top-[10%] left-[5%] w-72 h-72 bg-primary/10 rounded-full blur-[100px] animate-pulse"></div>
+                <div className="absolute bottom-[10%] right-[5%] w-96 h-96 bg-accent/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '1s' }}></div>
+            </div>
+
+            <div className="max-w-3xl mx-auto relative z-10">
+                <div className="text-center mb-12">
+                    <div className="inline-flex items-center justify-center p-4 bg-primary/10 text-primary rounded-2xl mb-4 shadow-xl shadow-primary/10">
+                        <Building2 size={36} />
                     </div>
-                    <h1 className="text-3xl font-bold text-text">Setup Your Company Profile</h1>
-                    <p className="text-muted mt-2">Finish setting up your account to start posting jobs.</p>
+                    <h1 className="text-4xl font-bold text-text">Welcome to LockedIn</h1>
+                    <p className="text-muted mt-3 text-lg font-medium">Let's set up your company profile to get started.</p>
                 </div>
 
-                <div className="bg-secondary rounded-xl border border-muted/30 shadow-xl overflow-hidden">
+                <div className="bg-secondary/40 backdrop-blur-xl rounded-2xl border border-muted/30 shadow-2xl overflow-hidden">
                     {error && (
-                        <div className="p-4 bg-red-500/10 border-b border-red-500/30 text-red-400 flex items-center gap-3">
-                            <Info size={18} />
+                        <div className="p-4 bg-red-500/10 border-b border-red-500/20 text-red-400 flex items-center gap-3 font-medium">
+                            <span className="shrink-0 text-lg text-red-400">⚠️</span>
                             {error}
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="p-8 space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="col-span-2">
-                                <label className="block text-sm font-medium text-muted mb-2">Company Name *</label>
+                    <form onSubmit={handleSubmit} className="p-8 md:p-10 space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                            <div className="col-span-2 space-y-2">
+                                <label className="block text-sm font-semibold text-muted ml-1 uppercase tracking-wider">Company Name <span className="text-primary">*</span></label>
                                 <input
                                     type="text"
                                     name="name"
                                     value={formData.name}
                                     onChange={handleChange}
-                                    placeholder="e.g. Acme Corp"
-                                    className="w-full px-4 py-3 bg-background border border-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-text"
+                                    placeholder="e.g. Acme Corporation"
+                                    className="w-full px-4 py-3.5 bg-background/50 border border-muted/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text font-medium"
                                     required
                                 />
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-muted mb-2">Industry</label>
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-muted ml-1 uppercase tracking-wider">Industry</label>
                                 <input
                                     type="text"
                                     name="industry"
                                     value={formData.industry}
                                     onChange={handleChange}
                                     placeholder="e.g. Technology"
-                                    className="w-full px-4 py-3 bg-background border border-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-text"
+                                    className="w-full px-4 py-3.5 bg-background/50 border border-muted/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text font-medium"
                                 />
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-muted mb-2">Company Size</label>
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-muted ml-1 uppercase tracking-wider">Company Size</label>
                                 <select
                                     name="size"
                                     value={formData.size}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-3 bg-background border border-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-text"
+                                    className="w-full px-4 py-3.5 bg-background/50 border border-muted/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text font-medium appearance-none cursor-pointer"
                                 >
                                     <option value="1-10">1-10 employees</option>
                                     <option value="11-50">11-50 employees</option>
@@ -107,48 +123,48 @@ export default function CompanyOnboardingPage() {
                                 </select>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-muted mb-2">Location</label>
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-muted ml-1 uppercase tracking-wider">Location</label>
                                 <input
                                     type="text"
                                     name="location"
                                     value={formData.location}
                                     onChange={handleChange}
                                     placeholder="e.g. San Francisco, CA"
-                                    className="w-full px-4 py-3 bg-background border border-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-text"
+                                    className="w-full px-4 py-3.5 bg-background/50 border border-muted/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text font-medium"
                                 />
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-muted mb-2">Website</label>
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-muted ml-1 uppercase tracking-wider">Website</label>
                                 <input
                                     type="url"
                                     name="website"
                                     value={formData.website}
                                     onChange={handleChange}
                                     placeholder="https://acme.com"
-                                    className="w-full px-4 py-3 bg-background border border-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-text"
+                                    className="w-full px-4 py-3.5 bg-background/50 border border-muted/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text font-medium"
                                 />
                             </div>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-muted mb-2">About the Company</label>
+                        <div className="space-y-2">
+                            <label className="block text-sm font-semibold text-muted ml-1 uppercase tracking-wider">About the Company</label>
                             <textarea
                                 name="description"
                                 value={formData.description}
                                 onChange={handleChange}
-                                rows={4}
-                                placeholder="Tell job seekers about your mission and culture..."
-                                className="w-full px-4 py-3 bg-background border border-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-text resize-none"
+                                rows={5}
+                                placeholder="Tell us about your mission, culture, and what makes your company a great place to work..."
+                                className="w-full px-4 py-4 bg-background/50 border border-muted/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-text font-medium resize-none shadow-inner"
                             />
                         </div>
 
-                        <div className="pt-4 border-t border-muted/30 flex justify-end">
+                        <div className="pt-8 border-t border-muted/20 flex justify-end">
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="flex items-center gap-2 px-8 py-3 bg-primary text-white font-bold rounded-lg hover:bg-accent transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20"
+                                className="flex items-center gap-3 px-10 py-4 bg-primary text-white font-bold rounded-xl hover:bg-accent transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl shadow-primary/30 group"
                             >
                                 {isSubmitting ? (
                                     <>
@@ -157,8 +173,8 @@ export default function CompanyOnboardingPage() {
                                     </>
                                 ) : (
                                     <>
-                                        Complete Profile
-                                        <ArrowRight size={20} />
+                                        Complete Setup
+                                        <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />
                                     </>
                                 )}
                             </button>

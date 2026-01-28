@@ -11,21 +11,25 @@ import PostJobPage from './pages/employer/PostJobPage';
 import CompanyOnboardingPage from './pages/onboarding/CompanyOnboardingPage';
 import JobSearchPage from './pages/JobSearchPage';
 
+import MainLayout from './components/layout/MainLayout';
+
 function App() {
   return (
     <AuthProvider>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/jobs" element={<JobSearchPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
-        <Route path="/profile/setup" element={<ProfileSetupPage />} />
-        <Route path="/profile" element={<ProfileViewPage />} />
-        <Route path="/employer/dashboard" element={<EmployerDashboard />} />
-        <Route path="/jobs/post" element={<PostJobPage />} />
-        <Route path="/onboarding/company-profile" element={<CompanyOnboardingPage />} />
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
+      <MainLayout>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/jobs" element={<JobSearchPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/profile/setup" element={<ProfileSetupPage />} />
+          <Route path="/profile" element={<ProfileViewPage />} />
+          <Route path="/employer/dashboard" element={<EmployerDashboard />} />
+          <Route path="/jobs/post" element={<PostJobPage />} />
+          <Route path="/onboarding/company-profile" element={<CompanyOnboardingPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </MainLayout>
     </AuthProvider>
   );
 }
