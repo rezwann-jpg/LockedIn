@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import { eq, desc, and, gt, isNull, or } from 'drizzle-orm'; // Added missing operators
 import db from '../config/db';
 import { jobs, companies, skills, jobSkills, applications } from '../db/schema';
-import { matchJobsForUser } from '../db/queries';
 import { UserRole } from '../db/schema';
 import { sql } from 'drizzle-orm';
 
@@ -91,54 +90,22 @@ export const createJob = async (req: AuthRequest, res: Response) => {
     }
 };
 
+import { matchJobsForUser, getJobsListing } from '../db/queries';
+
 // 2. GET /jobs - Public job board (active + non-expired only)
 export const getJobs = async (req: Request, res: Response) => {
     try {
-        const { sort, categoryId } = req.query;
+        const { sort, categoryId, search } = req.query;
         const user = (req as any).user;
 
-        // If sort by match requested and user is seeker, use matching query
-        if (sort === 'match' && user && user.role === 'job_seeker') {
-            const matchedJobs = await matchJobsForUser(user.id);
-            return res.json({ jobs: matchedJobs });
-        }
+        const jobsListing = await getJobsListing({
+            categoryId: categoryId ? parseInt(categoryId as string) : undefined,
+            search: search as string,
+            sortBy: sort as any,
+            userId: user?.id
+        });
 
-        // Timezone-safe: Compare UTC timestamps
-        const now = new Date();
-
-        const baseConditions = [
-            eq(jobs.isActive, true),
-            or(isNull(jobs.expiresAt), gt(jobs.expiresAt, now))
-        ];
-
-        if (categoryId) {
-            baseConditions.push(eq(jobs.categoryId, parseInt(categoryId as string)));
-        }
-
-        const allJobs = await db
-            .select({
-                id: jobs.id,
-                title: jobs.title,
-                description: jobs.description,
-                location: jobs.location,
-                jobType: jobs.jobType,
-                salaryMin: jobs.salaryMin,
-                salaryMax: jobs.salaryMax,
-                salaryCurrency: jobs.salaryCurrency,
-                remote: jobs.remote,
-                companyId: jobs.companyId,
-                categoryId: jobs.categoryId,
-                postedAt: jobs.postedAt,
-                companyName: companies.name,
-                companyLogo: companies.logoUrl,
-                applicationCount: jobs.applicationCount,
-            })
-            .from(jobs)
-            .leftJoin(companies, eq(jobs.companyId, companies.id))
-            .where(and(...baseConditions))
-            .orderBy(desc(jobs.postedAt));
-
-        res.json({ jobs: allJobs });
+        res.json({ jobs: jobsListing });
     } catch (err) {
         console.error('Error fetching jobs:', err);
         res.status(500).json({ error: 'Failed to fetch jobs' });

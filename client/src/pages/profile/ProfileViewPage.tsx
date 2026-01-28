@@ -54,9 +54,10 @@ type MatchedJob = {
   postedAt: string;
   companyName: string;
   companyLogo: string | null;
-  matching_skills: number;
-  total_skills: number;
-  match_percentage: number;
+  matchingSkills: number;
+  totalSkills: number;
+  matchPercentage: number;
+  hasApplied?: boolean;
 };
 
 type CompanyData = {
@@ -472,7 +473,7 @@ export default function ProfileViewPage() {
                           <p className="text-sm text-muted font-medium truncate">{job.companyName}</p>
                           <div className="flex items-center justify-between gap-4 mt-2">
                             <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2 py-0.5 rounded-md">
-                              {Math.round(job.match_percentage)}% Match
+                              {Math.round(job.matchPercentage)}% Match
                             </span>
                             {job.salaryMin && (
                               <span className="text-[10px] font-bold text-green-500 bg-green-500/10 px-2 py-0.5 rounded-md">
