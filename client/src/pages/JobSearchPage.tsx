@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../lib/api';
-import { Briefcase, MapPin, Clock, Search, Loader2 } from 'lucide-react';
+import { Briefcase, MapPin, Clock, Search, Loader2, ArrowUpDown, CheckCircle } from 'lucide-react';
+import { useAuth } from '../context/useAuth';
 
 type Job = {
     id: number;
@@ -11,26 +12,52 @@ type Job = {
     salaryMin: number | null;
     salaryMax: number | null;
     postedAt: string;
+    companyName?: string;
+    companyLogo?: string;
+    match_percentage?: number;
+    matching_skills?: number;
+    total_skills?: number;
 };
 
 export default function JobSearchPage() {
+    const { user } = useAuth();
     const [jobs, setJobs] = useState<Job[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [sortOrder, setSortOrder] = useState<'recent' | 'match'>('recent');
+    const [applyingId, setApplyingId] = useState<number | null>(null);
+    const [appliedJobs, setAppliedJobs] = useState<number[]>([]);
+
+    const fetchJobs = async () => {
+        setLoading(true);
+        try {
+            const url = sortOrder === 'match' ? '/jobs/matched' : '/jobs';
+            const res = await api.get<{ jobs: Job[] }>(url);
+            setJobs(res.data.jobs);
+        } catch (err) {
+            console.error('Failed to fetch jobs:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchJobs = async () => {
-            try {
-                const res = await api.get<{ jobs: Job[] }>('/jobs');
-                setJobs(res.data.jobs);
-            } catch (err) {
-                console.error('Failed to fetch jobs:', err);
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchJobs();
-    }, []);
+    }, [sortOrder]);
+
+    const handleApply = async (e: React.MouseEvent, jobId: number) => {
+        e.stopPropagation();
+        setApplyingId(jobId);
+        try {
+            await api.post(`/jobs/${jobId}/apply`);
+            setAppliedJobs(prev => [...prev, jobId]);
+        } catch (err) {
+            console.error('Failed to apply:', err);
+            alert('Failed to apply for this job. You might have already applied.');
+        } finally {
+            setApplyingId(null);
+        }
+    };
 
     const filteredJobs = jobs.filter(job =>
         job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -45,17 +72,33 @@ export default function JobSearchPage() {
                     <p className="text-muted text-lg">Find your next career move with LockedIn</p>
                 </header>
 
-                <div className="relative mb-8">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted">
-                        <Search size={20} />
+                <div className="flex flex-col md:flex-row gap-4 mb-8">
+                    <div className="relative flex-1">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted">
+                            <Search size={20} />
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Search by title or location..."
+                            className="w-full pl-10 pr-4 py-3 bg-secondary border border-muted/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary shadow-sm text-text"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
                     </div>
-                    <input
-                        type="text"
-                        placeholder="Search by title or location..."
-                        className="w-full pl-10 pr-4 py-4 bg-secondary border border-muted/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary shadow-sm text-text"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+
+                    {user?.role === 'job_seeker' && (
+                        <div className="flex items-center gap-2 bg-secondary border border-muted/30 rounded-xl px-4 py-2 self-start md:self-auto">
+                            <ArrowUpDown size={18} className="text-muted" />
+                            <select
+                                value={sortOrder}
+                                onChange={(e) => setSortOrder(e.target.value as any)}
+                                className="bg-transparent text-text border-none focus:ring-0 font-medium cursor-pointer"
+                            >
+                                <option value="recent">Most Recent</option>
+                                <option value="match">Best Match</option>
+                            </select>
+                        </div>
+                    )}
                 </div>
 
                 {loading ? (
@@ -85,13 +128,31 @@ export default function JobSearchPage() {
                                                         ${job.salaryMin.toLocaleString()} - {job.salaryMax?.toLocaleString()}
                                                     </div>
                                                 )}
+                                                {job.match_percentage !== undefined && (
+                                                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-primary/10 text-primary rounded-md border border-primary/20 font-bold">
+                                                        {Math.round(job.match_percentage)}% Match
+                                                    </div>
+                                                )}
                                             </div>
                                             <p className="mt-4 text-muted line-clamp-2 text-sm leading-relaxed">
                                                 {job.description}
                                             </p>
                                         </div>
-                                        <button className="px-6 py-2.5 bg-primary text-white font-semibold rounded-lg hover:bg-accent transition-colors">
-                                            View Details
+                                        <button
+                                            onClick={(e) => handleApply(e, job.id)}
+                                            disabled={applyingId === job.id || appliedJobs.includes(job.id)}
+                                            className={`px-6 py-2.5 font-semibold rounded-lg transition-all flex items-center gap-2 ${appliedJobs.includes(job.id)
+                                                ? 'bg-emerald-500/20 text-emerald-500 cursor-default'
+                                                : 'bg-primary text-white hover:bg-accent hover:scale-105 shadow-lg shadow-primary/20'
+                                                }`}
+                                        >
+                                            {applyingId === job.id ? (
+                                                <Loader2 className="animate-spin" size={18} />
+                                            ) : appliedJobs.includes(job.id) ? (
+                                                <><CheckCircle size={18} /> Applied</>
+                                            ) : (
+                                                'Apply Now'
+                                            )}
                                         </button>
                                     </div>
                                 </div>

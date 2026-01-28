@@ -77,6 +77,8 @@ export default function ProfileSetupPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [skills, setSkills] = useState<string[]>([]);
   const [currentSkill, setCurrentSkill] = useState('');
+  const [suggestedSkills, setSuggestedSkills] = useState<{ id: number; name: string }[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [educations, setEducations] = useState<EducationForm[]>([]);
   const [experiences, setExperiences] = useState<ExperienceForm[]>([]);
 
@@ -152,6 +154,25 @@ export default function ProfileSetupPage() {
 
     load();
   }, [user, navigate]);
+
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      const trimmed = currentSkill.trim();
+      if (trimmed.length < 2) {
+        setSuggestedSkills([]);
+        return;
+      }
+      try {
+        const res = await api.get<{ skills: { id: number; name: string }[] }>(`/skills?search=${trimmed}`);
+        setSuggestedSkills(res.data.skills);
+      } catch (err) {
+        console.error('Failed to fetch skill suggestions:', err);
+      }
+    };
+
+    const timer = setTimeout(fetchSuggestions, 300);
+    return () => clearTimeout(timer);
+  }, [currentSkill]);
 
   const handleSkillKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -396,6 +417,7 @@ export default function ProfileSetupPage() {
                   value={currentSkill}
                   onChange={(e) => setCurrentSkill(e.target.value)}
                   onKeyDown={handleSkillKeyDown}
+                  onFocus={() => setShowSuggestions(true)}
                   className="flex-1 px-4 py-3 bg-secondary border border-muted/50 rounded-lg text-text placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium"
                   placeholder="Type a skill and press Enter (e.g. React, UX Design, Python)"
                 />
@@ -407,6 +429,26 @@ export default function ProfileSetupPage() {
                   Add
                 </button>
               </div>
+
+              {showSuggestions && suggestedSkills.length > 0 && (
+                <div className="relative mb-4">
+                  <div className="absolute top-0 w-full z-10 bg-background border border-muted/50 rounded-lg shadow-xl overflow-hidden max-h-60 overflow-y-auto">
+                    {suggestedSkills.filter(s => !skills.includes(s.name)).map(skill => (
+                      <button
+                        key={skill.id}
+                        onClick={() => {
+                          setSkills(prev => [...prev, skill.name]);
+                          setCurrentSkill('');
+                          setShowSuggestions(false);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-primary/10 text-text transition-colors border-b border-muted/10 last:border-0"
+                      >
+                        {skill.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="flex flex-wrap gap-2 min-h-[100px] p-4 bg-secondary/30 rounded-lg border border-dashed border-muted/50">
                 {skills.length > 0 ? (

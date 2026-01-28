@@ -86,6 +86,101 @@ async function main() {
       $$ LANGUAGE plpgsql;
     `);
 
+    // 7. Function: get_or_create_skill_id
+    console.log('Creating function: get_or_create_skill_id...');
+    await db.execute(sql`
+      CREATE OR REPLACE FUNCTION get_or_create_skill_id(p_name TEXT)
+      RETURNS INT AS $$
+      DECLARE
+        v_skill_id INT;
+      BEGIN
+        SELECT id INTO v_skill_id FROM skills WHERE LOWER(name) = LOWER(TRIM(p_name));
+        IF v_skill_id IS NULL THEN
+          INSERT INTO skills (name) VALUES (TRIM(p_name)) RETURNING id INTO v_skill_id;
+        END IF;
+        RETURN v_skill_id;
+      END;
+      $$ LANGUAGE plpgsql;
+    `);
+
+    // 8. Function: has_user_graduated
+    console.log('Creating function: has_user_graduated...');
+    await db.execute(sql`
+      CREATE OR REPLACE FUNCTION has_user_graduated(p_user_id INT)
+      RETURNS BOOLEAN AS $$
+      DECLARE
+        v_has_future_edu BOOLEAN;
+      BEGIN
+        SELECT EXISTS (
+          SELECT 1 FROM educations 
+          WHERE user_id = p_user_id 
+          AND (end_date IS NULL OR end_date > NOW())
+        ) INTO v_has_future_edu;
+        RETURN NOT v_has_future_edu;
+      END;
+      $$ LANGUAGE plpgsql;
+    `);
+
+    // 9. Stored Procedure: add_user_skill_by_name
+    console.log('Creating stored procedure: add_user_skill_by_name...');
+    await db.execute(sql`
+      CREATE OR REPLACE PROCEDURE add_user_skill_by_name(p_user_id INT, p_skill_name TEXT)
+      AS $$
+      DECLARE
+        v_skill_id INT;
+      BEGIN
+        v_skill_id := get_or_create_skill_id(p_skill_name);
+        INSERT INTO user_skills (user_id, skill_id) 
+        VALUES (p_user_id, v_skill_id)
+        ON CONFLICT DO NOTHING;
+      END;
+      $$ LANGUAGE plpgsql;
+    `);
+
+    // 10. Stored Procedure: update_user_skills
+    console.log('Creating stored procedure: update_user_skills...');
+    await db.execute(sql`
+      CREATE OR REPLACE PROCEDURE update_user_skills(p_user_id INT, p_skill_names TEXT[])
+      AS $$
+      DECLARE
+        skill_name TEXT;
+        v_skill_id INT;
+      BEGIN
+        DELETE FROM user_skills WHERE user_id = p_user_id;
+        FOREACH skill_name IN ARRAY p_skill_names LOOP
+          IF skill_name IS NOT NULL AND TRIM(skill_name) <> '' THEN
+            v_skill_id := get_or_create_skill_id(skill_name);
+            INSERT INTO user_skills (user_id, skill_id) 
+            VALUES (p_user_id, v_skill_id)
+            ON CONFLICT DO NOTHING;
+          END IF;
+        END LOOP;
+      END;
+      $$ LANGUAGE plpgsql;
+    `);
+
+    // 11. Stored Procedure: update_job_skills
+    console.log('Creating stored procedure: update_job_skills...');
+    await db.execute(sql`
+      CREATE OR REPLACE PROCEDURE update_job_skills(p_job_id INT, p_skill_names TEXT[])
+      AS $$
+      DECLARE
+        skill_name TEXT;
+        v_skill_id INT;
+      BEGIN
+        DELETE FROM job_skills WHERE job_id = p_job_id;
+        FOREACH skill_name IN ARRAY p_skill_names LOOP
+          IF skill_name IS NOT NULL AND TRIM(skill_name) <> '' THEN
+            v_skill_id := get_or_create_skill_id(skill_name);
+            INSERT INTO job_skills (job_id, skill_id) 
+            VALUES (p_job_id, v_skill_id)
+            ON CONFLICT DO NOTHING;
+          END IF;
+        END LOOP;
+      END;
+      $$ LANGUAGE plpgsql;
+    `);
+
     console.log('DB Extensions Setup Completed Successfully.');
     process.exit(0);
   } catch (err) {

@@ -1,8 +1,10 @@
 import { Request, Response } from 'express';
 import { eq, desc, and, gt, isNull, or } from 'drizzle-orm'; // Added missing operators
 import db from '../config/db';
-import { jobs, companies } from '../db/schema';
+import { jobs, companies, skills, jobSkills, applications } from '../db/schema';
+import { matchJobsForUser } from '../db/queries';
 import { UserRole } from '../db/schema';
+import { sql } from 'drizzle-orm';
 
 export interface AuthRequest extends Request {
     user?: {
@@ -73,8 +75,14 @@ export const createJob = async (req: AuthRequest, res: Response) => {
             expiresAt,
         }).returning();
 
-        // TODO: Handle jobSkills insertion here when implemented
-        // if (req.body.skills?.length) { ... }
+        // Handle skills insertion via stored procedure
+        if (req.body.skills && Array.isArray(req.body.skills)) {
+            const skillNames = req.body.skills.filter((s: any) => typeof s === 'string');
+            if (skillNames.length > 0) {
+                const skillArraySql = sql`ARRAY[${sql.join(skillNames.map((s: string) => sql`${s}`), sql`, `)}]::TEXT[]`;
+                await db.execute(sql`CALL update_job_skills(${newJob.id}, ${skillArraySql})`);
+            }
+        }
 
         res.status(201).json({ job: newJob });
     } catch (err) {
@@ -86,6 +94,15 @@ export const createJob = async (req: AuthRequest, res: Response) => {
 // 2. GET /jobs - Public job board (active + non-expired only)
 export const getJobs = async (req: Request, res: Response) => {
     try {
+        const { sort } = req.query;
+        const user = (req as any).user;
+
+        // If sort by match requested and user is seeker, use matching query
+        if (sort === 'match' && user && user.role === 'job_seeker') {
+            const matchedJobs = await matchJobsForUser(user.id);
+            return res.json({ jobs: matchedJobs });
+        }
+
         // Timezone-safe: Compare UTC timestamps
         const now = new Date();
 
@@ -104,6 +121,7 @@ export const getJobs = async (req: Request, res: Response) => {
                 postedAt: jobs.postedAt,
                 companyName: companies.name,
                 companyLogo: companies.logoUrl,
+                applicationCount: jobs.applicationCount,
             })
             .from(jobs)
             .leftJoin(companies, eq(jobs.companyId, companies.id))
@@ -147,5 +165,66 @@ export const getCompanyJobs = async (req: AuthRequest, res: Response) => {
     } catch (err) {
         console.error('Error fetching company jobs:', err);
         res.status(500).json({ error: 'Failed to fetch jobs' });
+    }
+};
+
+// 4. GET /jobs/matched - Recommended jobs for user
+export const getMatchedJobs = async (req: AuthRequest, res: Response) => {
+    try {
+        const user = req.user;
+        if (!user || user.role !== 'job_seeker') {
+            return res.status(403).json({ error: 'Only job seekers can get matched jobs' });
+        }
+
+        const matchedJobs = await matchJobsForUser(user.id);
+        res.json({ jobs: matchedJobs });
+    } catch (err) {
+        console.error('Error fetching matched jobs:', err);
+        res.status(500).json({ error: 'Failed to fetch matched jobs' });
+    }
+};
+
+// 5. POST /jobs/:id/apply - Apply for a job
+export const applyToJob = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        const jobId = parseInt(req.params.id as string);
+
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        if (isNaN(jobId)) {
+            return res.status(400).json({ error: 'Invalid job ID' });
+        }
+
+        // Check if already applied
+        const [existing] = await db
+            .select()
+            .from(applications)
+            .where(and(eq(applications.userId, userId), eq(applications.jobId, jobId)));
+
+        if (existing) {
+            return res.status(400).json({ error: 'Already applied for this job' });
+        }
+
+        // Check graduation status via DB function
+        const graduationQuery = sql`SELECT has_user_graduated(${userId}) as graduated`;
+        const gradRows = (await db.execute(graduationQuery)).rows;
+        const hasGraduated = gradRows[0]?.graduated;
+
+        await db.insert(applications).values({
+            userId,
+            jobId,
+            status: 'applied',
+        });
+
+        res.status(201).json({
+            message: 'Application submitted successfully',
+            meta: { hasGraduated }
+        });
+    } catch (err) {
+        console.error('Error applying for job:', err);
+        res.status(500).json({ error: 'Failed to apply for job' });
     }
 };

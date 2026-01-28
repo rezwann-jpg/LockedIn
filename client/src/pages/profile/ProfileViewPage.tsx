@@ -14,7 +14,10 @@ import {
   Mail,
   Building,
   Award,
-  Loader2
+  Loader2,
+  Sparkles,
+  ArrowRight,
+  TrendingUp
 } from 'lucide-react';
 
 type Education = {
@@ -44,6 +47,19 @@ type ProfileData = {
   experiences: Experience[];
 };
 
+type MatchedJob = {
+  id: number;
+  title: string;
+  salary_min: number | null;
+  salary_max: number | null;
+  posted_at: string;
+  company_name: string;
+  company_logo: string | null;
+  matching_skills: number;
+  total_skills: number;
+  match_percentage: number;
+};
+
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return '';
   const date = new Date(dateStr);
@@ -55,7 +71,9 @@ export default function ProfileViewPage() {
   const navigate = useNavigate();
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [matchedJobs, setMatchedJobs] = useState<MatchedJob[]>([]);
   const [loading, setLoading] = useState(true);
+  const [matchingLoading, setMatchingLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -66,6 +84,11 @@ export default function ProfileViewPage() {
       try {
         const res = await api.get<{ profile: ProfileData }>('/profile');
         setProfile(res.data.profile);
+
+        // Fetch matched jobs if user is a seeker
+        if (user?.role === 'job_seeker') {
+          fetchMatchedJobs();
+        }
       } catch (err) {
         console.error(err);
         if (err instanceof AxiosError) {
@@ -77,6 +100,18 @@ export default function ProfileViewPage() {
         }
       } finally {
         setLoading(false);
+      }
+    };
+
+    const fetchMatchedJobs = async () => {
+      setMatchingLoading(true);
+      try {
+        const res = await api.get<{ jobs: MatchedJob[] }>('/jobs/matched');
+        setMatchedJobs(res.data.jobs);
+      } catch (err) {
+        console.error('Failed to fetch matched jobs:', err);
+      } finally {
+        setMatchingLoading(false);
       }
     };
 
@@ -224,6 +259,82 @@ export default function ProfileViewPage() {
             <p className="text-muted italic">No skills added yet.</p>
           )}
         </section>
+
+        {user.role === 'job_seeker' && (
+          <section className="bg-secondary rounded-xl border border-muted/30 p-6 mb-6 shadow-sm overflow-hidden relative">
+            <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
+              <Sparkles size={120} />
+            </div>
+
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-500/10 text-amber-500 rounded-lg">
+                  <TrendingUp size={20} />
+                </div>
+                <h3 className="text-xl font-semibold text-text">Recommended Jobs</h3>
+              </div>
+              <button
+                onClick={() => navigate('/jobs')}
+                className="text-primary hover:text-accent text-sm font-medium transition-colors flex items-center gap-1"
+              >
+                Browse All <ArrowRight size={14} />
+              </button>
+            </div>
+
+            {matchingLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="animate-spin text-primary" size={24} />
+              </div>
+            ) : matchedJobs.length > 0 ? (
+              <div className="grid gap-4">
+                {matchedJobs.map((job) => (
+                  <div
+                    key={job.id}
+                    onClick={() => navigate(`/jobs/${job.id}`)}
+                    className="group bg-background p-4 rounded-lg border border-muted/20 hover:border-primary/40 transition-all cursor-pointer shadow-sm hover:shadow-md"
+                  >
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="flex gap-4">
+                        <div className="w-12 h-12 bg-secondary rounded flex items-center justify-center text-lg font-bold text-muted overflow-hidden">
+                          {job.company_logo ? (
+                            <img src={job.company_logo} alt={job.company_name} className="w-full h-full object-cover" />
+                          ) : (
+                            job.company_name.charAt(0)
+                          )}
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-text group-hover:text-primary transition-colors line-clamp-1">{job.title}</h4>
+                          <p className="text-sm text-muted">{job.company_name}</p>
+                          <div className="flex items-center gap-3 mt-2">
+                            {job.salary_min && (
+                              <span className="text-xs font-medium text-green-500 bg-green-500/10 px-2 py-0.5 rounded">
+                                ${job.salary_min.toLocaleString()} - ${job.salary_max?.toLocaleString()}
+                              </span>
+                            )}
+                            <span className="text-xs text-muted">
+                              Matched {job.matching_skills}/{job.total_skills} skills
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right flex flex-col items-end gap-1">
+                        <div className="text-lg font-bold text-primary">
+                          {Math.round(job.match_percentage)}%
+                        </div>
+                        <span className="text-[10px] text-muted uppercase tracking-wider font-bold">Match Score</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 bg-background/30 rounded-lg border border-dashed border-muted/20">
+                <Sparkles className="mx-auto text-muted/30 mb-2" size={32} />
+                <p className="text-muted text-sm">Add more skills to see personalized job recommendations!</p>
+              </div>
+            )}
+          </section>
+        )}
 
         <section className="bg-secondary rounded-xl border border-muted/30 p-6 mb-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">

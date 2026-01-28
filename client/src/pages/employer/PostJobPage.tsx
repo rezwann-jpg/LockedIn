@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../lib/api';
-import { ArrowLeft, Loader2, Info } from 'lucide-react';
+import { ArrowLeft, Loader2, Info, X } from 'lucide-react';
 import { AxiosError } from 'axios';
 
 export default function PostJobPage() {
@@ -19,12 +19,61 @@ export default function PostJobPage() {
         description: '',
         requirements: '',
         responsibilities: '',
+        skills: [] as string[],
     });
+
+    const [currentSkill, setCurrentSkill] = useState('');
+    const [suggestedSkills, setSuggestedSkills] = useState<{ id: number; name: string }[]>([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
+
+    const addSkill = () => {
+        const trimmed = currentSkill.trim();
+        if (trimmed && !formData.skills.includes(trimmed)) {
+            setFormData(prev => ({
+                ...prev,
+                skills: [...prev.skills, trimmed]
+            }));
+            setCurrentSkill('');
+        }
+    };
+
+    const removeSkill = (skillToRemove: string) => {
+        setFormData(prev => ({
+            ...prev,
+            skills: prev.skills.filter(s => s !== skillToRemove)
+        }));
+    };
+
+    const handleSkillKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addSkill();
+        }
+    };
+
+    useEffect(() => {
+        const fetchSuggestions = async () => {
+            const trimmed = currentSkill.trim();
+            if (trimmed.length < 2) {
+                setSuggestedSkills([]);
+                return;
+            }
+            try {
+                const res = await api.get<{ skills: { id: number; name: string }[] }>(`/skills?search=${trimmed}`);
+                setSuggestedSkills(res.data.skills);
+            } catch (err) {
+                console.error('Failed to fetch skill suggestions:', err);
+            }
+        };
+
+        const timer = setTimeout(fetchSuggestions, 300);
+        return () => clearTimeout(timer);
+    }, [currentSkill]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -164,41 +213,111 @@ export default function PostJobPage() {
                         <div className="space-y-4">
                             <h3 className="text-lg font-semibold text-text border-l-4 border-primary pl-3">Job Details</h3>
 
-                            <div>
-                                <label className="block text-sm font-medium text-muted mb-1.5">Description <span className="text-red-400">*</span></label>
-                                <textarea
-                                    name="description"
-                                    value={formData.description}
-                                    onChange={handleChange}
-                                    rows={4}
-                                    placeholder="Describe the role and the team..."
-                                    className="w-full px-4 py-2.5 bg-background border border-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-text resize-y"
-                                    required
-                                />
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-muted mb-1.5">Description <span className="text-red-400">*</span></label>
+                                    <textarea
+                                        name="description"
+                                        value={formData.description}
+                                        onChange={handleChange}
+                                        rows={4}
+                                        placeholder="Describe the role and the team..."
+                                        className="w-full px-4 py-2.5 bg-background border border-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-text resize-y"
+                                        required
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-muted mb-1.5">Requirements</label>
+                                    <textarea
+                                        name="requirements"
+                                        value={formData.requirements}
+                                        onChange={handleChange}
+                                        rows={3}
+                                        placeholder="What skills are required?"
+                                        className="w-full px-4 py-2.5 bg-background border border-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-text resize-y"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-muted mb-1.5">Responsibilities</label>
+                                    <textarea
+                                        name="responsibilities"
+                                        value={formData.responsibilities}
+                                        onChange={handleChange}
+                                        rows={3}
+                                        placeholder="What will the candidate do?"
+                                        className="w-full px-4 py-2.5 bg-background border border-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-text resize-y"
+                                    />
+                                </div>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-muted mb-1.5">Requirements</label>
-                                <textarea
-                                    name="requirements"
-                                    value={formData.requirements}
-                                    onChange={handleChange}
-                                    rows={3}
-                                    placeholder="What skills are required?"
-                                    className="w-full px-4 py-2.5 bg-background border border-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-text resize-y"
-                                />
-                            </div>
+                            {/* Skills Section */}
+                            <div className="space-y-4 pt-4">
+                                <h3 className="text-lg font-semibold text-text border-l-4 border-primary pl-3">Required Skills</h3>
+                                <div className="space-y-4">
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={currentSkill}
+                                            onChange={(e) => setCurrentSkill(e.target.value)}
+                                            onKeyDown={handleSkillKeyDown}
+                                            onFocus={() => setShowSuggestions(true)}
+                                            placeholder="Add a skill (e.g. React, Python)"
+                                            className="flex-1 px-4 py-2.5 bg-background border border-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-text"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={addSkill}
+                                            className="px-4 py-2.5 bg-primary/10 text-primary border border-primary/20 rounded-lg hover:bg-primary/20 transition-colors font-medium"
+                                        >
+                                            Add
+                                        </button>
+                                    </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-muted mb-1.5">Responsibilities</label>
-                                <textarea
-                                    name="responsibilities"
-                                    value={formData.responsibilities}
-                                    onChange={handleChange}
-                                    rows={3}
-                                    placeholder="What will the candidate do?"
-                                    className="w-full px-4 py-2.5 bg-background border border-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-text resize-y"
-                                />
+                                    {showSuggestions && suggestedSkills.length > 0 && (
+                                        <div className="relative">
+                                            <div className="absolute top-0 w-full z-10 bg-background border border-muted/50 rounded-lg shadow-xl overflow-hidden max-h-60 overflow-y-auto">
+                                                {suggestedSkills.filter(s => !formData.skills.includes(s.name)).map(skill => (
+                                                    <button
+                                                        key={skill.id}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setFormData(prev => ({ ...prev, skills: [...prev.skills, skill.name] }));
+                                                            setCurrentSkill('');
+                                                            setShowSuggestions(false);
+                                                        }}
+                                                        className="w-full text-left px-4 py-2 hover:bg-primary/10 text-text transition-colors border-b border-muted/10 last:border-0"
+                                                    >
+                                                        {skill.name}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex flex-wrap gap-2 min-h-[40px] p-3 bg-background/50 rounded-lg border border-dashed border-muted/50">
+                                        {formData.skills.length > 0 ? (
+                                            formData.skills.map((skill) => (
+                                                <span
+                                                    key={skill}
+                                                    className="inline-flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1 rounded-md text-sm font-medium border border-primary/20"
+                                                >
+                                                    {skill}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeSkill(skill)}
+                                                        className="text-primary/60 hover:text-primary transition-colors"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </span>
+                                            ))
+                                        ) : (
+                                            <p className="text-muted text-sm italic">No skills added yet.</p>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

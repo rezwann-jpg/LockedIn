@@ -7,7 +7,7 @@ import {
   educations,
   experiences,
 } from '../db/schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
 export const getUserProfile = async (req: Request, res: Response) => {
   try {
@@ -69,44 +69,15 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     const userId = (req as any).user.id;
     const { skills: skillNames, educations: eduData, experiences: expData } = req.body;
 
-    const skillId: number[] = [];
+    // Utilize the stored procedure for skills
     if (Array.isArray(skillNames)) {
-      for (const skillName of skillNames) {
-        if (typeof skillName !== 'string') continue;
-        const cleanName = skillName.trim();
-        if (!cleanName) continue;
-
-        let [existing] = await db
-          .select({ id: skills.id })
-          .from(skills)
-          .where(eq(skills.name, cleanName));
-
-        if (!existing) {
-          const [newSkill] = await db
-            .insert(skills)
-            .values({ name: cleanName })
-            .returning({ id: skills.id });
-          skillId.push(newSkill.id);
-        } else {
-          skillId.push(existing.id);
-        }
-      }
-
-      await db
-        .delete(userSkills)
-        .where(eq(userSkills.userId, userId));
-
-      if (skillId.length > 0) {
-        await db
-          .insert(userSkills)
-          .values(skillId.map(id => ({
-            userId,
-            skillId: id,
-          }))
-        );
-      }
+      const skillArraySql = skillNames.length > 0
+        ? sql`ARRAY[${sql.join(skillNames.map(s => sql`${s}`), sql`, `)}]::TEXT[]`
+        : sql`ARRAY[]::TEXT[]`;
+      await db.execute(sql`CALL update_user_skills(${userId}, ${skillArraySql})`);
     }
 
+    // Update Educations (Simple clear and insert approach)
     await db
       .delete(educations)
       .where(eq(educations.userId, userId));
@@ -124,6 +95,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
       );
     }
 
+    // Update Experiences
     await db
       .delete(experiences)
       .where(eq(experiences.userId, userId));
@@ -136,9 +108,9 @@ export const updateUserProfile = async (req: Request, res: Response) => {
           location: exp.location || null,
           startDate: exp.startDate || null,
           endDate:
-                exp.currentlyWorking || exp.endDate === 'Present'
-                  ? null
-                  : exp.endDate || null,
+            exp.currentlyWorking || exp.endDate === 'Present'
+              ? null
+              : exp.endDate || null,
           description: exp.description || null,
           currentlyWorking: Boolean(exp.currentlyWorking),
         }))
