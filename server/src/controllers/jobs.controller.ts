@@ -94,7 +94,7 @@ export const createJob = async (req: AuthRequest, res: Response) => {
 // 2. GET /jobs - Public job board (active + non-expired only)
 export const getJobs = async (req: Request, res: Response) => {
     try {
-        const { sort } = req.query;
+        const { sort, categoryId } = req.query;
         const user = (req as any).user;
 
         // If sort by match requested and user is seeker, use matching query
@@ -105,6 +105,15 @@ export const getJobs = async (req: Request, res: Response) => {
 
         // Timezone-safe: Compare UTC timestamps
         const now = new Date();
+
+        const baseConditions = [
+            eq(jobs.isActive, true),
+            or(isNull(jobs.expiresAt), gt(jobs.expiresAt, now))
+        ];
+
+        if (categoryId) {
+            baseConditions.push(eq(jobs.categoryId, parseInt(categoryId as string)));
+        }
 
         const allJobs = await db
             .select({
@@ -118,6 +127,7 @@ export const getJobs = async (req: Request, res: Response) => {
                 salaryCurrency: jobs.salaryCurrency,
                 remote: jobs.remote,
                 companyId: jobs.companyId,
+                categoryId: jobs.categoryId,
                 postedAt: jobs.postedAt,
                 companyName: companies.name,
                 companyLogo: companies.logoUrl,
@@ -125,12 +135,7 @@ export const getJobs = async (req: Request, res: Response) => {
             })
             .from(jobs)
             .leftJoin(companies, eq(jobs.companyId, companies.id))
-            .where(
-                and(
-                    eq(jobs.isActive, true),
-                    or(isNull(jobs.expiresAt), gt(jobs.expiresAt, now))
-                )
-            )
+            .where(and(...baseConditions))
             .orderBy(desc(jobs.postedAt));
 
         res.json({ jobs: allJobs });

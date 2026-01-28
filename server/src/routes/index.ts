@@ -4,6 +4,7 @@ import { getUserProfile, updateUserProfile } from '../controllers/profile.contro
 import { validateSignup, validateLogin } from '../middleware/validate';
 import { authenticate } from '../middleware/auth.middleware';
 import { getSkills } from '../controllers/skills.controller';
+import { getCategories } from '../controllers/category.controller';
 import { applyToJob } from '../controllers/jobs.controller';
 
 import jobsRoutes from './jobs.routes';
@@ -19,6 +20,7 @@ router.use('/jobs', jobsRoutes);
 router.use('/company', companyRoutes);
 
 router.get('/skills', getSkills);
+router.get('/categories', getCategories);
 router.post('/jobs/:id/apply', authenticate, applyToJob);
 
 export default router;

@@ -19,8 +19,11 @@ export default function PostJobPage() {
         description: '',
         requirements: '',
         responsibilities: '',
+        categoryId: '',
         skills: [] as string[],
     });
+
+    const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
 
     const [currentSkill, setCurrentSkill] = useState('');
     const [suggestedSkills, setSuggestedSkills] = useState<{ id: number; name: string }[]>([]);
@@ -75,6 +78,18 @@ export default function PostJobPage() {
         return () => clearTimeout(timer);
     }, [currentSkill]);
 
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const res = await api.get<{ categories: { id: number; name: string }[] }>('/categories');
+                setCategories(res.data.categories);
+            } catch (err) {
+                console.error('Failed to fetch categories:', err);
+            }
+        };
+        fetchCategories();
+    }, []);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -90,6 +105,7 @@ export default function PostJobPage() {
         try {
             await api.post('/company/jobs', {
                 ...formData,
+                categoryId: formData.categoryId ? parseInt(formData.categoryId) : null,
                 salaryMin: formData.salaryMin ? parseInt(formData.salaryMin) : null,
                 salaryMax: formData.salaryMax ? parseInt(formData.salaryMax) : null,
                 remote: formData.remote
@@ -163,6 +179,22 @@ export default function PostJobPage() {
                                         <option value="contract">Contract</option>
                                         <option value="internship">Internship</option>
                                         <option value="freelance">Freelance</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-muted mb-1.5">Job Category <span className="text-red-400">*</span></label>
+                                    <select
+                                        name="categoryId"
+                                        value={formData.categoryId}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-2.5 bg-background border border-muted rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-text"
+                                        required
+                                    >
+                                        <option value="">Select a category</option>
+                                        {categories.map(cat => (
+                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                        ))}
                                     </select>
                                 </div>
 

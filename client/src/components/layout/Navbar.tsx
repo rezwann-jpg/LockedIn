@@ -114,7 +114,7 @@ export default function Navbar() {
                                 <div className="flex items-center px-3">
                                     <div className="flex-shrink-0">
                                         <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-                                            {user.name.charAt(0).toUpperCase()}
+                                            {(user.name || user.email).charAt(0).toUpperCase()}
                                         </div>
                                     </div>
                                     <div className="ml-3">

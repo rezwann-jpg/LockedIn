@@ -181,6 +181,29 @@ async function main() {
       $$ LANGUAGE plpgsql;
     `);
 
+    // 12. Seed Default Categories
+    console.log('Seeding default categories...');
+    const defaultCategories = [
+      'Software Development',
+      'Design',
+      'Marketing',
+      'Product Management',
+      'Sales',
+      'Data Science',
+      'Customer Support',
+      'Operations',
+      'Human Resources',
+      'Finance'
+    ];
+
+    for (const catName of defaultCategories) {
+      await db.execute(sql`
+        INSERT INTO categories (name) 
+        VALUES (${catName}) 
+        ON CONFLICT (name) DO NOTHING;
+      `);
+    }
+
     console.log('DB Extensions Setup Completed Successfully.');
     process.exit(0);
   } catch (err) {

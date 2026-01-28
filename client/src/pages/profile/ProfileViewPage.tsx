@@ -49,14 +49,26 @@ type ProfileData = {
 type MatchedJob = {
   id: number;
   title: string;
-  salary_min: number | null;
-  salary_max: number | null;
-  posted_at: string;
-  company_name: string;
-  company_logo: string | null;
+  salaryMin: number | null;
+  salaryMax: number | null;
+  postedAt: string;
+  companyName: string;
+  companyLogo: string | null;
   matching_skills: number;
   total_skills: number;
   match_percentage: number;
+};
+
+type CompanyData = {
+  id: number;
+  name: string;
+  description: string | null;
+  location: string | null;
+  website: string | null;
+  industry: string | null;
+  size: string | null;
+  logoUrl: string | null;
+  isVerified: boolean;
 };
 
 function formatDate(dateStr: string | null): string {
@@ -70,6 +82,7 @@ export default function ProfileViewPage() {
   const navigate = useNavigate();
 
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [company, setCompany] = useState<CompanyData | null>(null);
   const [matchedJobs, setMatchedJobs] = useState<MatchedJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [matchingLoading, setMatchingLoading] = useState(false);
@@ -81,8 +94,9 @@ export default function ProfileViewPage() {
       setError(null);
 
       try {
-        const res = await api.get<{ profile: ProfileData }>('/profile');
+        const res = await api.get<{ profile: ProfileData; company: CompanyData | null }>('/profile');
         setProfile(res.data.profile);
+        setCompany(res.data.company);
 
         // Fetch matched jobs if user is a seeker
         if (user?.role === 'job_seeker') {
@@ -170,7 +184,7 @@ export default function ProfileViewPage() {
           <div className="flex flex-col md:flex-row gap-10 items-center md:items-end">
             <div className="relative group">
               <div className="w-32 h-32 md:w-40 md:h-40 bg-primary/20 rounded-3xl flex items-center justify-center text-5xl font-bold text-primary shadow-2xl shadow-primary/20 transform group-hover:scale-[1.02] transition-transform duration-300">
-                {user.name.charAt(0).toUpperCase()}
+                {(user.name || user.email).charAt(0).toUpperCase()}
               </div>
               <button
                 onClick={() => navigate('/profile/setup')}
@@ -182,7 +196,7 @@ export default function ProfileViewPage() {
 
             <div className="flex-1 text-center md:text-left space-y-4">
               <div className="space-y-1">
-                <h1 className="text-4xl md:text-5xl font-bold text-text tracking-tight">{user.name}</h1>
+                <h1 className="text-4xl md:text-5xl font-bold text-text tracking-tight">{user.name || 'Your Profile'}</h1>
                 <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 text-muted pt-2">
                   <span className="flex items-center gap-2 px-4 py-1.5 bg-background/50 border border-muted/20 rounded-full text-sm font-medium backdrop-blur-sm">
                     {user.role === 'job_seeker' ? <UserIcon size={14} /> : <Building size={14} />}
@@ -243,13 +257,53 @@ export default function ProfileViewPage() {
                     </span>
                   ))}
                 </div>
-              ) : (
+              ) : user.role === 'job_seeker' ? (
                 <div className="group border-2 border-dashed border-muted/20 rounded-3xl p-10 text-center hover:border-primary/30 transition-colors cursor-pointer" onClick={() => navigate('/profile/setup')}>
                   <Sparkles className="mx-auto text-muted/30 mb-4 group-hover:text-primary/50 transition-colors" size={40} />
                   <p className="text-muted text-lg">Add your skills to showcase your expertise.</p>
                 </div>
-              )}
+              ) : null}
             </section>
+
+            {/* Company Info section for Employers */}
+            {user.role === 'company' && company && (
+              <section className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="p-2.5 bg-primary/10 text-primary rounded-2xl">
+                    <Building size={24} />
+                  </div>
+                  <h2 className="text-2xl font-bold text-text tracking-tight">Company Details</h2>
+                  <div className="h-[1px] flex-1 bg-gradient-to-r from-muted/30 to-transparent ml-4"></div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-8">
+                  <div className="space-y-6">
+                    <div>
+                      <h4 className="text-sm font-bold text-muted uppercase tracking-wider mb-2">Industry</h4>
+                      <p className="text-lg text-text font-medium">{company.industry || 'Not specified'}</p>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-muted uppercase tracking-wider mb-2">Company Size</h4>
+                      <p className="text-lg text-text font-medium">{company.size || 'Not specified'} Employees</p>
+                    </div>
+                    {company.website && (
+                      <div>
+                        <h4 className="text-sm font-bold text-muted uppercase tracking-wider mb-2">Website</h4>
+                        <a href={company.website} target="_blank" rel="noopener noreferrer" className="text-lg text-primary hover:underline font-medium">
+                          {company.website.replace(/^https?:\/\//, '')}
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                  {company.description && (
+                    <div>
+                      <h4 className="text-sm font-bold text-muted uppercase tracking-wider mb-2">About</h4>
+                      <p className="text-muted leading-relaxed whitespace-pre-wrap">{company.description}</p>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
 
             {/* Experience Section */}
             <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
@@ -405,24 +459,24 @@ export default function ProfileViewPage() {
                         className="group flex gap-4 p-4 -mx-4 rounded-3xl hover:bg-secondary/30 transition-all cursor-pointer"
                       >
                         <div className="w-14 h-14 bg-background border border-muted/20 rounded-2xl flex items-center justify-center text-xl font-bold text-muted overflow-hidden shrink-0 shadow-sm transition-transform group-hover:scale-105">
-                          {job.company_logo ? (
-                            <img src={job.company_logo} alt={job.company_name} className="w-full h-full object-cover" />
+                          {job.companyLogo ? (
+                            <img src={job.companyLogo} alt={job.companyName} className="w-full h-full object-cover" />
                           ) : (
-                            job.company_name.charAt(0)
+                            job.companyName.charAt(0)
                           )}
                         </div>
                         <div className="flex-1 space-y-1.5 min-w-0">
                           <h4 className="font-bold text-text text-base group-hover:text-primary transition-colors truncate">
                             {job.title}
                           </h4>
-                          <p className="text-sm text-muted font-medium truncate">{job.company_name}</p>
+                          <p className="text-sm text-muted font-medium truncate">{job.companyName}</p>
                           <div className="flex items-center justify-between gap-4 mt-2">
                             <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2 py-0.5 rounded-md">
                               {Math.round(job.match_percentage)}% Match
                             </span>
-                            {job.salary_min && (
+                            {job.salaryMin && (
                               <span className="text-[10px] font-bold text-green-500 bg-green-500/10 px-2 py-0.5 rounded-md">
-                                ${Math.round(job.salary_min / 1000)}k+
+                                ${Math.round(job.salaryMin / 1000)}k+
                               </span>
                             )}
                           </div>

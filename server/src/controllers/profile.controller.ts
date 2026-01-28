@@ -1,12 +1,6 @@
 import { Request, Response } from 'express';
 import db from '../config/db';
-import {
-  users,
-  skills,
-  userSkills,
-  educations,
-  experiences,
-} from '../db/schema';
+import { companies, users, skills, userSkills, educations, experiences } from '../db/schema';
 import { eq, sql } from 'drizzle-orm';
 
 export const getUserProfile = async (req: Request, res: Response) => {
@@ -19,9 +13,16 @@ export const getUserProfile = async (req: Request, res: Response) => {
       .where(eq(users.id, userId));
 
     if (!user) {
-      return res
-        .status(404)
-        .json({ error: 'User not found' });
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    let companyData = null;
+    if (user.role === 'company') {
+      [companyData] = await db
+        .select()
+        .from(companies)
+        .where(eq(companies.userId, userId))
+        .limit(1);
     }
 
     const userSkillRows = await db
@@ -53,14 +54,13 @@ export const getUserProfile = async (req: Request, res: Response) => {
         skills: skillsList,
         educations: edcationList,
         experiences: experienceList,
-      }
+      },
+      company: companyData
     });
   }
   catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 

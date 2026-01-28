@@ -22,6 +22,8 @@ type Job = {
 export default function JobSearchPage() {
     const { user } = useAuth();
     const [jobs, setJobs] = useState<Job[]>([]);
+    const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+    const [selectedCategory, setSelectedCategory] = useState<string>('');
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOrder, setSortOrder] = useState<'recent' | 'match'>('recent');
@@ -32,7 +34,10 @@ export default function JobSearchPage() {
         setLoading(true);
         try {
             const url = sortOrder === 'match' ? '/jobs/matched' : '/jobs';
-            const res = await api.get<{ jobs: Job[] }>(url);
+            const params = new URLSearchParams();
+            if (selectedCategory) params.append('categoryId', selectedCategory);
+
+            const res = await api.get<{ jobs: Job[] }>(`${url}${params.toString() ? `?${params.toString()}` : ''}`);
             setJobs(res.data.jobs);
         } catch (err) {
             console.error('Failed to fetch jobs:', err);
@@ -43,7 +48,19 @@ export default function JobSearchPage() {
 
     useEffect(() => {
         fetchJobs();
-    }, [sortOrder]);
+    }, [sortOrder, selectedCategory]);
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const res = await api.get<{ categories: { id: number; name: string }[] }>('/categories');
+                setCategories(res.data.categories);
+            } catch (err) {
+                console.error('Failed to fetch categories:', err);
+            }
+        };
+        fetchCategories();
+    }, []);
 
     const handleApply = async (e: React.MouseEvent, jobId: number) => {
         e.stopPropagation();
@@ -95,16 +112,32 @@ export default function JobSearchPage() {
                     </div>
 
                     {user?.role === 'job_seeker' && (
-                        <div className="flex items-center gap-2 bg-secondary border border-muted/30 rounded-xl px-4 py-2 self-start md:self-auto">
-                            <ArrowUpDown size={18} className="text-muted" />
-                            <select
-                                value={sortOrder}
-                                onChange={(e) => setSortOrder(e.target.value as any)}
-                                className="bg-transparent text-text border-none focus:ring-0 font-medium cursor-pointer"
-                            >
-                                <option value="recent">Most Recent</option>
-                                <option value="match">Best Match</option>
-                            </select>
+                        <div className="flex flex-wrap items-center gap-3">
+                            <div className="flex items-center gap-2 bg-secondary border border-muted/30 rounded-xl px-4 py-2">
+                                <Search size={18} className="text-muted" />
+                                <select
+                                    value={selectedCategory}
+                                    onChange={(e) => setSelectedCategory(e.target.value)}
+                                    className="bg-transparent text-text border-none focus:ring-0 font-medium cursor-pointer"
+                                >
+                                    <option value="">All Categories</option>
+                                    {categories.map(cat => (
+                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="flex items-center gap-2 bg-secondary border border-muted/30 rounded-xl px-4 py-2">
+                                <ArrowUpDown size={18} className="text-muted" />
+                                <select
+                                    value={sortOrder}
+                                    onChange={(e) => setSortOrder(e.target.value as any)}
+                                    className="bg-transparent text-text border-none focus:ring-0 font-medium cursor-pointer"
+                                >
+                                    <option value="recent">Most Recent</option>
+                                    <option value="match">Best Match</option>
+                                </select>
+                            </div>
                         </div>
                     )}
                 </div>

@@ -3,8 +3,8 @@ import db from '../config/db';
 import { jobs, companies, jobSkills, userSkills } from './schema';
 
 export const matchJobsForUser = async (userId: number) => {
-    try {
-        const query = sql`
+  try {
+    const query = sql`
       WITH user_known_skills AS (
         SELECT skill_id 
         FROM ${userSkills}
@@ -24,13 +24,17 @@ export const matchJobsForUser = async (userId: number) => {
       SELECT 
         j.id,
         j.title,
-        j.salary_min,
-        j.salary_max,
-        j.posted_at,
-        c.name as company_name,
-        c.logo_url as company_logo,
-        js.matching_skills,
-        js.total_skills,
+        j.description,
+        j.location,
+        j.job_type as "jobType",
+        j.salary_min as "salaryMin",
+        j.salary_max as "salaryMax",
+        j.category_id as "categoryId",
+        j.posted_at as "postedAt",
+        c.name as "companyName",
+        c.logo_url as "companyLogo",
+        js.matching_skills as "matching_skills",
+        js.total_skills as "total_skills",
         CASE 
           WHEN js.total_skills = 0 THEN 0 
           ELSE (js.matching_skills::float / js.total_skills) * 100 
@@ -42,10 +46,10 @@ export const matchJobsForUser = async (userId: number) => {
       LIMIT 10;
     `;
 
-        const result = await db.execute(query);
-        return result.rows;
-    } catch (error) {
-        console.error('Error matching jobs:', error);
-        throw error;
-    }
+    const result = await db.execute(query);
+    return result.rows;
+  } catch (error) {
+    console.error('Error matching jobs:', error);
+    throw error;
+  }
 };
