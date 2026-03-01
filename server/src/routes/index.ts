@@ -21,6 +21,5 @@ router.use('/company', companyRoutes);
 
 router.get('/skills', getSkills);
 router.get('/categories', getCategories);
-router.post('/jobs/:id/apply', authenticate, applyToJob);
 
 export default router;

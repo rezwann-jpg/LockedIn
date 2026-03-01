@@ -4,6 +4,7 @@ import { useAuth } from '../../context/useAuth';
 import api from '../../lib/api';
 import { Plus, Users, Briefcase, Eye, Calendar, Loader2 } from 'lucide-react';
 import { AxiosError } from 'axios';
+import JobApplicantsList from '../../components/JobApplicantsList';
 
 type Job = {
     id: number;
@@ -28,6 +29,7 @@ export default function EmployerDashboard() {
     const [jobs, setJobs] = useState<Job[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [selectedJob, setSelectedJob] = useState<{ id: number, title: string } | null>(null);
 
     useEffect(() => {
         if (!authLoading && (!user || user.role !== 'company')) {
@@ -83,7 +85,6 @@ export default function EmployerDashboard() {
 
     return (
         <div className="min-h-[calc(100vh-64px)] bg-background p-6 lg:p-10 relative overflow-hidden">
-            {/* Decorative background elements */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
                 <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/5 blur-[120px] rounded-full"></div>
                 <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full"></div>
@@ -92,12 +93,12 @@ export default function EmployerDashboard() {
             <div className="max-w-6xl mx-auto space-y-10">
                 <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                     <div className="space-y-2">
-                        <h1 className="text-4xl md:text-5xl font-bold text-text tracking-tight">Employer Dashboard</h1>
-                        <p className="text-muted text-lg">Manage your job postings and grow your team.</p>
+                        <h1 className="text-4xl md:text-5xl font-black text-text tracking-tight uppercase">Employer <span className="text-primary">Dashboard</span></h1>
+                        <p className="text-muted text-lg font-medium">Manage your job postings and grow your team.</p>
                     </div>
                     <button
                         onClick={() => navigate('/jobs/post')}
-                        className="group flex items-center gap-3 px-6 py-3.5 bg-primary text-white rounded-2xl hover:bg-accent transition-all font-bold shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98]"
+                        className="group flex items-center gap-3 px-8 py-4 bg-primary text-white rounded-[24px] hover:bg-accent transition-all font-black uppercase tracking-widest shadow-2xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98]"
                     >
                         <Plus size={20} className="group-hover:rotate-90 transition-transform duration-300" />
                         Post a New Job
@@ -113,85 +114,85 @@ export default function EmployerDashboard() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {stats.map((stat, idx) => (
-                        <div key={idx} className="bg-secondary/50 backdrop-blur-xl p-8 rounded-3xl border border-muted/20 shadow-xl group hover:border-primary/30 transition-all duration-300">
+                        <div key={idx} className="bg-secondary/40 backdrop-blur-2xl p-8 rounded-[40px] border border-muted/10 shadow-xl group hover:border-primary/30 transition-all duration-300">
                             <div className="flex items-center justify-between mb-4">
-                                <div className={`p-4 ${stat.bg} ${stat.color} rounded-2xl group-hover:scale-110 transition-transform duration-300`}>
-                                    <stat.icon size={28} />
+                                <div className={`p-5 ${stat.bg} ${stat.color} rounded-2xl group-hover:scale-110 transition-transform duration-300`}>
+                                    <stat.icon size={32} />
                                 </div>
-                                <span className="text-4xl font-black text-text tracking-tighter">{stat.value}</span>
+                                <span className="text-5xl font-black text-text tracking-tighter">{stat.value}</span>
                             </div>
-                            <p className="text-muted font-bold uppercase tracking-widest text-xs">{stat.label}</p>
+                            <p className="text-muted font-black uppercase tracking-[0.2em] text-[10px]">{stat.label}</p>
                         </div>
                     ))}
                 </div>
 
-                <section className="space-y-6">
+                <section className="space-y-8">
                     <div className="flex items-center gap-4">
-                        <h2 className="text-2xl font-bold text-text tracking-tight">Your Job Postings</h2>
-                        <div className="h-[1px] flex-1 bg-gradient-to-r from-muted/20 to-transparent"></div>
+                        <h2 className="text-3xl font-black text-text tracking-tight uppercase italic">Your <span className="text-primary">Listings</span></h2>
+                        <div className="h-[2px] flex-1 bg-gradient-to-r from-muted/20 to-transparent"></div>
                     </div>
 
                     {jobs.length === 0 ? (
-                        <div className="text-center py-20 bg-secondary/30 backdrop-blur-md rounded-3xl border-2 border-dashed border-muted/20">
-                            <div className="w-20 h-20 bg-muted/10 rounded-full flex items-center justify-center mx-auto mb-6 text-muted/30">
-                                <Briefcase size={40} />
+                        <div className="text-center py-20 bg-secondary/20 backdrop-blur-md rounded-[48px] border-2 border-dashed border-muted/10">
+                            <div className="w-24 h-24 bg-muted/10 rounded-full flex items-center justify-center mx-auto mb-6 text-muted/20">
+                                <Briefcase size={48} />
                             </div>
-                            <h3 className="text-2xl font-bold text-text mb-2">No jobs posted yet</h3>
-                            <p className="text-muted mb-8 max-w-sm mx-auto font-medium">Start hiring by posting your first job opening to find your perfect match.</p>
+                            <h3 className="text-3xl font-black text-text mb-2">No jobs posted yet</h3>
+                            <p className="text-muted mb-8 max-w-sm mx-auto font-bold uppercase tracking-wide text-sm">Start hiring by posting your first job opening.</p>
                             <button
                                 onClick={() => navigate('/jobs/post')}
-                                className="px-8 py-3 bg-primary/10 text-primary rounded-xl hover:bg-primary/20 transition-all font-bold"
+                                className="px-10 py-4 bg-primary text-white rounded-2xl hover:bg-accent transition-all font-black uppercase tracking-widest shadow-lg"
                             >
                                 Create Job Post
                             </button>
                         </div>
                     ) : (
-                        <div className="grid gap-6">
+                        <div className="grid gap-8">
                             {jobs.map(job => (
-                                <div key={job.id} className="group bg-secondary/50 backdrop-blur-xl rounded-3xl border border-muted/20 p-8 hover:border-primary/40 transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-primary/5">
-                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                                        <div className="space-y-4">
-                                            <div className="flex flex-wrap items-center gap-3">
-                                                <h3 className="text-2xl font-bold text-text group-hover:text-primary transition-colors">{job.title}</h3>
-                                                <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest ${job.isActive
-                                                        ? 'bg-green-500/10 text-green-500'
-                                                        : 'bg-muted/10 text-muted'
+                                <div key={job.id} className="group bg-secondary/50 backdrop-blur-xl rounded-[40px] border border-muted/10 p-8 md:p-10 hover:border-primary/40 transition-all duration-500 shadow-xl hover:shadow-2xl hover:shadow-primary/5">
+                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+                                        <div className="space-y-5">
+                                            <div className="flex flex-wrap items-center gap-4">
+                                                <h3 className="text-3xl font-black text-text group-hover:text-primary transition-colors tracking-tight">{job.title}</h3>
+                                                <span className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${job.isActive
+                                                    ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                                                    : 'bg-muted/10 text-muted border border-muted/20'
                                                     }`}>
                                                     {job.isActive ? 'Active' : 'Closed'}
                                                 </span>
                                             </div>
-                                            <div className="flex flex-wrap items-center gap-6 text-sm text-muted font-medium">
-                                                <span className="flex items-center gap-2">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-primary/50"></div>
+                                            <div className="flex flex-wrap items-center gap-8 text-sm text-muted font-black uppercase tracking-widest">
+                                                <span className="flex items-center gap-3">
+                                                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(var(--primary-rgb),0.5)]"></div>
                                                     {job.location}
                                                 </span>
-                                                <span className="flex items-center gap-2 capitalize">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-primary/50"></div>
+                                                <span className="flex items-center gap-3">
+                                                    <Briefcase size={16} className="text-primary/50" />
                                                     {job.jobType.replace('_', ' ')}
                                                 </span>
-                                                <span className="flex items-center gap-2">
-                                                    <Calendar size={14} className="text-primary/50" />
-                                                    Posted {formatDate(job.postedAt)}
+                                                <span className="flex items-center gap-3">
+                                                    <Calendar size={16} className="text-primary/50" />
+                                                    {formatDate(job.postedAt)}
                                                 </span>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-8 md:gap-12 pl-6 md:pl-12 md:border-l border-muted/20">
-                                            <div className="text-center group-hover:scale-105 transition-transform">
-                                                <span className="block text-2xl font-black text-text tracking-tighter">
+                                        <div className="flex items-center gap-8 md:gap-16 pl-8 md:pl-16 md:border-l border-muted/10">
+                                            <div className="text-center group-hover:scale-110 transition-transform duration-500">
+                                                <span className="block text-4xl font-black text-text tracking-tighter">
                                                     {job.applicationCount || 0}
                                                 </span>
-                                                <span className="text-[10px] text-muted font-black uppercase tracking-widest mt-1">Applicants</span>
+                                                <span className="text-[10px] text-muted font-black uppercase tracking-[0.2em] mt-2 block">Applicants</span>
                                             </div>
-                                            <div className="text-center group-hover:scale-105 transition-transform delay-75">
-                                                <span className="block text-2xl font-black text-text tracking-tighter">
+                                            <div className="text-center group-hover:scale-110 transition-transform duration-500 delay-100">
+                                                <span className="block text-4xl font-black text-text tracking-tighter">
                                                     {job.viewsCount || 0}
                                                 </span>
-                                                <span className="text-[10px] text-muted font-black uppercase tracking-widest mt-1">Views</span>
+                                                <span className="text-[10px] text-muted font-black uppercase tracking-[0.2em] mt-2 block">Views</span>
                                             </div>
                                             <button
-                                                className="px-6 py-3 border-2 border-muted/30 rounded-2xl text-sm font-bold text-text hover:bg-primary hover:text-white hover:border-primary transition-all duration-300"
-                                                onClick={() => { /* View Applicants logic later */ }}
+                                                className="px-10 py-4 bg-background border-2 border-muted/10 rounded-2xl text-sm font-black uppercase tracking-widest text-text hover:bg-primary hover:text-white hover:border-primary transition-all duration-300 shadow-2xl hover:scale-[1.05]"
+                                                onClick={() => setSelectedJob({ id: job.id, title: job.title })}
                                             >
                                                 Manage
                                             </button>
@@ -203,6 +204,14 @@ export default function EmployerDashboard() {
                     )}
                 </section>
             </div>
+
+            {selectedJob && (
+                <JobApplicantsList
+                    jobId={selectedJob.id}
+                    jobTitle={selectedJob.title}
+                    onClose={() => setSelectedJob(null)}
+                />
+            )}
         </div>
     );
 }

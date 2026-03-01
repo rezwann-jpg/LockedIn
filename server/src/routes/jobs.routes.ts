@@ -1,5 +1,14 @@
 import { Router } from 'express';
-import { createJob, getJobs, getCompanyJobs, getMatchedJobs } from '../controllers/jobs.controller';
+import {
+    createJob,
+    getJobs,
+    getCompanyJobs,
+    getMatchedJobs,
+    applyToJob,
+    getMyApplications,
+    getJobApplicants,
+    updateApplicationStatus
+} from '../controllers/jobs.controller';
 import { authenticate, optionalAuthenticate } from '../middleware/auth.middleware';
 
 const router = Router();
@@ -9,5 +18,17 @@ router.get('/', optionalAuthenticate, getJobs);
 
 // Seekers: Get personalized matches
 router.get('/matched', authenticate, getMatchedJobs);
+
+// Seekers: Get own applications
+router.get('/applications/my', authenticate, getMyApplications);
+
+// Seekers: Apply for a job
+router.post('/:id/apply', authenticate, applyToJob);
+
+// Companies: Get applicants for a job
+router.get('/:id/applicants', authenticate, getJobApplicants);
+
+// Companies: Update application status
+router.patch('/applications/:id', authenticate, updateApplicationStatus);
 
 export default router;

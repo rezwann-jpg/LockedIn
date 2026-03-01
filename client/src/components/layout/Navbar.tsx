@@ -16,7 +16,10 @@ export default function Navbar() {
     const navLinks = [
         { name: 'Jobs', path: '/jobs', icon: Briefcase },
         ...(user?.role === 'job_seeker'
-            ? [{ name: 'My Profile', path: '/profile', icon: User }]
+            ? [
+                { name: 'My Applications', path: '/jobs/applications', icon: Briefcase },
+                { name: 'My Profile', path: '/profile', icon: User }
+            ]
             : []),
         ...(user?.role === 'company'
             ? [{ name: 'Dashboard', path: '/employer/dashboard', icon: LayoutDashboard }]

@@ -10,6 +10,7 @@ import EmployerDashboard from './pages/employer/EmployerDashboard';
 import PostJobPage from './pages/employer/PostJobPage';
 import CompanyOnboardingPage from './pages/onboarding/CompanyOnboardingPage';
 import JobSearchPage from './pages/JobSearchPage';
+import MyApplicationsPage from './pages/MyApplicationsPage';
 
 import MainLayout from './components/layout/MainLayout';
 
@@ -20,6 +21,7 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/jobs" element={<JobSearchPage />} />
+          <Route path="/jobs/applications" element={<MyApplicationsPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/profile/setup" element={<ProfileSetupPage />} />

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { eq, desc, and, gt, isNull, or } from 'drizzle-orm'; // Added missing operators
 import db from '../config/db';
-import { jobs, companies, skills, jobSkills, applications } from '../db/schema';
+import { jobs, companies, skills, jobSkills, applications, users } from '../db/schema';
 import { UserRole } from '../db/schema';
 import { sql } from 'drizzle-orm';
 
@@ -90,19 +90,25 @@ export const createJob = async (req: AuthRequest, res: Response) => {
     }
 };
 
-import { matchJobsForUser, getJobsListing } from '../db/queries';
+import { getJobsListing } from '../db/queries';
 
 // 2. GET /jobs - Public job board (active + non-expired only)
 export const getJobs = async (req: Request, res: Response) => {
     try {
-        const { sort, categoryId, search } = req.query;
+        const { sort, categoryId, search, jobType, location, salaryMin, remote, limit, offset } = req.query;
         const user = (req as any).user;
 
         const jobsListing = await getJobsListing({
             categoryId: categoryId ? parseInt(categoryId as string) : undefined,
             search: search as string,
             sortBy: sort as any,
-            userId: user?.id
+            userId: user?.id,
+            jobType: jobType as string,
+            location: location as string,
+            salaryMin: salaryMin ? parseInt(salaryMin as string) : undefined,
+            remote: remote !== undefined ? remote === 'true' : undefined,
+            limit: limit ? parseInt(limit as string) : undefined,
+            offset: offset ? parseInt(offset as string) : undefined,
         });
 
         res.json({ jobs: jobsListing });
@@ -148,7 +154,7 @@ export const getMatchedJobs = async (req: AuthRequest, res: Response) => {
             return res.status(403).json({ error: 'Only job seekers can get matched jobs' });
         }
 
-        const matchedJobs = await matchJobsForUser(user.id);
+        const matchedJobs = await getJobsListing({ userId: user.id, sortBy: 'match', limit: 10 });
         res.json({ jobs: matchedJobs });
     } catch (err) {
         console.error('Error fetching matched jobs:', err);
@@ -161,6 +167,7 @@ export const applyToJob = async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user?.id;
         const jobId = parseInt(req.params.id as string);
+        const { coverLetter, resumeUrl } = req.body;
 
         if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });
@@ -188,6 +195,8 @@ export const applyToJob = async (req: AuthRequest, res: Response) => {
         await db.insert(applications).values({
             userId,
             jobId,
+            coverLetter,
+            resumeUrl,
             status: 'applied',
         });
 
@@ -198,5 +207,112 @@ export const applyToJob = async (req: AuthRequest, res: Response) => {
     } catch (err) {
         console.error('Error applying for job:', err);
         res.status(500).json({ error: 'Failed to apply for job' });
+    }
+};
+
+// 6. GET /jobs/applications/my - Get seeker's own applications
+export const getMyApplications = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+        const myApps = await db
+            .select({
+                id: applications.id,
+                status: applications.status,
+                appliedAt: applications.appliedAt,
+                jobTitle: jobs.title,
+                companyName: companies.name,
+                location: jobs.location,
+            })
+            .from(applications)
+            .innerJoin(jobs, eq(applications.jobId, jobs.id))
+            .innerJoin(companies, eq(jobs.companyId, companies.id))
+            .where(eq(applications.userId, userId))
+            .orderBy(desc(applications.appliedAt));
+
+        res.json({ applications: myApps });
+    } catch (err) {
+        console.error('Error fetching applications:', err);
+        res.status(500).json({ error: 'Failed to fetch applications' });
+    }
+};
+
+// 7. GET /jobs/:id/applicants - Get applicants for a job (Company only)
+export const getJobApplicants = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        const jobId = parseInt(req.params.id as string);
+
+        if (!userId || req.user?.role !== 'company') {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        const companyId = await getCompanyIdForUser(userId);
+
+        // Ensure the job belongs to this company
+        const [job] = await db
+            .select()
+            .from(jobs)
+            .where(and(eq(jobs.id, jobId), eq(jobs.companyId, companyId!)));
+
+        if (!job) {
+            return res.status(404).json({ error: 'Job not found or access denied' });
+        }
+
+        const applicants = await db
+            .select({
+                id: applications.id,
+                status: applications.status,
+                appliedAt: applications.appliedAt,
+                userName: users.name,
+                userEmail: users.email,
+                coverLetter: applications.coverLetter,
+                resumeUrl: applications.resumeUrl,
+            })
+            .from(applications)
+            .innerJoin(users, eq(applications.userId, users.id))
+            .where(eq(applications.jobId, jobId))
+            .orderBy(desc(applications.appliedAt));
+
+        res.json({ applicants });
+    } catch (err) {
+        console.error('Error fetching applicants:', err);
+        res.status(500).json({ error: 'Failed to fetch applicants' });
+    }
+};
+
+// 8. PATCH /jobs/applications/:id - Update application status (Company only)
+export const updateApplicationStatus = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        const applicationId = parseInt(req.params.id as string);
+        const { status } = req.body;
+
+        if (!userId || req.user?.role !== 'company') {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        const companyId = await getCompanyIdForUser(userId);
+
+        // Verify application belongs to a job from this company
+        const [app] = await db
+            .select({ id: applications.id })
+            .from(applications)
+            .innerJoin(jobs, eq(applications.jobId, jobs.id))
+            .where(and(eq(applications.id, applicationId), eq(jobs.companyId, companyId!)));
+
+        if (!app) {
+            return res.status(404).json({ error: 'Application not found or access denied' });
+        }
+
+        await db.update(applications)
+            .set({ status, updatedAt: new Date() })
+            .where(eq(applications.id, applicationId));
+
+        res.json({ message: 'Application status updated successfully' });
+    } catch (err) {
+        console.error('Error updating application status:', err);
+        res.status(500).json({ error: 'Failed to update application status' });
     }
 };
