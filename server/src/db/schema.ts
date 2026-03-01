@@ -11,6 +11,8 @@ import {
   date,
   uniqueIndex,
   index,
+  jsonb,
+  customType,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { InferSelectModel, InferInsertModel } from 'drizzle-orm';
@@ -277,6 +279,57 @@ export const applications = pgTable(
     jobIdIndex: index('applications_job_id_idx').on(table.jobId),
     statusIndex: index('applications_status_idx').on(table.status),
     appliedAtIndex: index('applications_applied_at_idx').on(table.appliedAt),
+  })
+);
+
+// ============================================================================
+// DATABASE PROJECT EXTENSIONS
+// ============================================================================
+
+// Custom TSVECTOR type for full-text search
+const tsvector = customType<{ data: string }>({
+  dataType() {
+    return 'tsvector';
+  },
+});
+
+export const userResumes = pgTable(
+  'user_resumes',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    versionName: varchar('version_name', { length: 100 }).notNull().default('Main'),
+    fileContent: text('file_content'), // Could use BYTEA, but using text/base64 for simplicity in this demo or URL
+    parsedContent: jsonb('parsed_content'), // Structured JSON data
+    searchText: text('search_text'), // Plain text for indexing
+    searchVector: tsvector('search_vector'), // Full-text search vector
+    isMain: boolean('is_main').notNull().default(false),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => ({
+    userIdIndex: index('user_resumes_user_id_idx').on(table.userId),
+    searchVectorIndex: index('user_resumes_search_idx').using('gin', table.searchVector),
+  })
+);
+
+export const applicationHistory = pgTable(
+  'application_history',
+  {
+    id: serial('id').primaryKey(),
+    applicationId: integer('application_id')
+      .notNull()
+      .references(() => applications.id, { onDelete: 'cascade' }),
+    oldStatus: applicationStatusEnum('old_status'),
+    newStatus: applicationStatusEnum('new_status').notNull(),
+    changedBy: integer('changed_by').references(() => users.id),
+    changeReason: text('change_reason'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => ({
+    applicationIdIndex: index('app_history_app_id_idx').on(table.applicationId),
   })
 );
 
