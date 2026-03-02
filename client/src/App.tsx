@@ -11,6 +11,7 @@ import PostJobPage from './pages/employer/PostJobPage';
 import CompanyOnboardingPage from './pages/onboarding/CompanyOnboardingPage';
 import JobSearchPage from './pages/JobSearchPage';
 import MyApplicationsPage from './pages/MyApplicationsPage';
+import MarketTrendsPage from './pages/MarketTrendsPage';
 
 import MainLayout from './components/layout/MainLayout';
 
@@ -22,6 +23,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/jobs" element={<JobSearchPage />} />
           <Route path="/jobs/applications" element={<MyApplicationsPage />} />
+          <Route path="/trends" element={<MarketTrendsPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/profile/setup" element={<ProfileSetupPage />} />

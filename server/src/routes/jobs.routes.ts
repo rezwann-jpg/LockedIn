@@ -9,7 +9,8 @@ import {
     getJobApplicants,
     updateApplicationStatus,
     getUserResumes,
-    uploadResume
+    uploadResume,
+    getMarketTrends
 } from '../controllers/jobs.controller';
 import { authenticate, optionalAuthenticate } from '../middleware/auth.middleware';
 
@@ -17,6 +18,9 @@ const router = Router();
 
 // Public: View all jobs (Optional auth for personalized matching)
 router.get('/', optionalAuthenticate, getJobs);
+
+// Public: Market trends
+router.get('/trends', getMarketTrends);
 
 // Seekers: Get personalized matches
 router.get('/matched', authenticate, getMatchedJobs);

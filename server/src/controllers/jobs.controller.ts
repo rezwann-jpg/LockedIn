@@ -366,3 +366,14 @@ export const updateApplicationStatus = async (req: AuthRequest, res: Response) =
         res.status(500).json({ error: 'Failed to update application status' });
     }
 };
+
+// 9. GET /api/jobs/trends - Get market trends analytics (Public)
+export const getMarketTrends = async (_req: Request, res: Response) => {
+    try {
+        const result = await db.execute(sql`SELECT * FROM category_demand_analytics`);
+        res.json({ trends: result.rows });
+    } catch (err) {
+        console.error('Error fetching market trends:', err);
+        res.status(500).json({ error: 'Failed to fetch market trends' });
+    }
+};

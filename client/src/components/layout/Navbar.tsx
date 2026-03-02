@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/useAuth';
-import { LogOut, User, Briefcase, LayoutDashboard, Menu, X } from 'lucide-react';
+import { LogOut, User, Briefcase, LayoutDashboard, Menu, X, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 
 export default function Navbar() {
@@ -15,6 +15,7 @@ export default function Navbar() {
 
     const navLinks = [
         { name: 'Jobs', path: '/jobs', icon: Briefcase },
+        { name: 'Trends', path: '/trends', icon: TrendingUp },
         ...(user?.role === 'job_seeker'
             ? [
                 { name: 'My Applications', path: '/jobs/applications', icon: Briefcase },
