@@ -23,6 +23,7 @@ type Job = {
     totalSkills?: number;
     hasApplied?: boolean;
     remote: boolean;
+    applicationCount: number;
 };
 
 
@@ -337,23 +338,20 @@ export default function JobSearchPage() {
 
             {viewingJob && (
                 <JobDetailsModal
-                    job={viewingJob}
-                    isOpen={!!viewingJob}
+                    job={viewingJob as any}
                     onClose={() => setViewingJob(null)}
-                    onApply={() => {
-                        setViewingJob(null);
-                        setSelectedJob(viewingJob);
-                    }}
-                    hasApplied={appliedJobs.includes(viewingJob.id)}
                 />
             )}
 
             {selectedJob && (
                 <ApplicationModal
-                    job={selectedJob}
-                    isOpen={!!selectedJob}
+                    jobId={selectedJob.id}
+                    jobTitle={selectedJob.title}
                     onClose={() => setSelectedJob(null)}
-                    onSuccess={handleApplySuccess}
+                    onSuccess={() => {
+                        handleApplySuccess(selectedJob.id);
+                        setSelectedJob(null);
+                    }}
                 />
             )}
         </div>

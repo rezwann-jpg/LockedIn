@@ -16,8 +16,10 @@ import {
   Loader2,
   Sparkles,
   ArrowRight,
-  TrendingUp
+  TrendingUp,
+  FileText
 } from 'lucide-react';
+import ResumeManager from '../../components/ResumeManager';
 
 type Education = {
   id: number;
@@ -306,7 +308,24 @@ export default function ProfileViewPage() {
               </section>
             )}
 
-            {/* Experience Section */}
+            {/* Resume Management Section for Seekers */}
+            {user.role === 'job_seeker' && (
+              <section className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="p-2.5 bg-primary/10 text-primary rounded-2xl">
+                    <FileText size={24} />
+                  </div>
+                  <h2 className="text-2xl font-bold text-text tracking-tight">Resume Management</h2>
+                  <div className="h-[1px] flex-1 bg-gradient-to-r from-muted/30 to-transparent ml-4"></div>
+                </div>
+
+                <div className="bg-secondary/20 rounded-[40px] border border-muted/10 overflow-hidden shadow-sm">
+                  <ResumeManager />
+                </div>
+              </section>
+            )}
+
+            {/* Existing Experience Section */}
             <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
               <div className="flex items-center gap-4 mb-10">
                 <div className="p-2.5 bg-green-500/10 text-green-500 rounded-2xl">
@@ -375,7 +394,7 @@ export default function ProfileViewPage() {
             {/* Education Section */}
             <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
               <div className="flex items-center gap-4 mb-10">
-                <div className="p-2.5 bg-purple-500/10 text-purple-500 rounded-2xl">
+                <div className="p-2.5 bg-accent/10 text-accent rounded-2xl">
                   <GraduationCap size={24} />
                 </div>
                 <h2 className="text-2xl font-bold text-text tracking-tight">Education</h2>
@@ -390,12 +409,12 @@ export default function ProfileViewPage() {
                         <div className="absolute left-[11px] top-8 bottom-[-40px] w-[2px] bg-muted/20"></div>
                       )}
 
-                      <div className="absolute left-0 top-1.5 w-6 h-6 rounded-full border-4 border-background bg-purple-500 group-hover:scale-110 transition-transform"></div>
+                      <div className="absolute left-0 top-1.5 w-6 h-6 rounded-full border-4 border-background bg-accent group-hover:scale-110 transition-transform"></div>
 
                       <div className="space-y-2">
                         <div className="flex flex-wrap justify-between items-start gap-4">
                           <div>
-                            <h3 className="text-xl font-bold text-text group-hover:text-purple-400 transition-colors uppercase tracking-tight">{edu.school}</h3>
+                            <h3 className="text-xl font-bold text-text group-hover:text-accent transition-colors uppercase tracking-tight">{edu.school}</h3>
                             <p className="text-lg font-medium text-text/80 mt-1">
                               {edu.degree}
                               {edu.fieldOfStudy && (
@@ -407,7 +426,7 @@ export default function ProfileViewPage() {
                             </p>
                           </div>
                           <span className="text-sm font-bold text-muted uppercase tracking-wider flex items-center gap-2">
-                            <Calendar size={14} className="text-purple-400/70" />
+                            <Calendar size={14} className="text-accent/70" />
                             {formatDate(edu.startDate)} — {formatDate(edu.endDate) || 'Present'}
                           </span>
                         </div>
@@ -506,7 +525,7 @@ export default function ProfileViewPage() {
             </div>
           </aside>
         </div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }

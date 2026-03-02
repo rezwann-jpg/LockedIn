@@ -7,7 +7,9 @@ import {
     applyToJob,
     getMyApplications,
     getJobApplicants,
-    updateApplicationStatus
+    updateApplicationStatus,
+    getUserResumes,
+    uploadResume
 } from '../controllers/jobs.controller';
 import { authenticate, optionalAuthenticate } from '../middleware/auth.middleware';
 
@@ -30,5 +32,9 @@ router.get('/:id/applicants', authenticate, getJobApplicants);
 
 // Companies: Update application status
 router.patch('/applications/:id', authenticate, updateApplicationStatus);
+
+// Seekers: Resume management
+router.get('/resumes', authenticate, getUserResumes);
+router.post('/resumes', authenticate, uploadResume);
 
 export default router;

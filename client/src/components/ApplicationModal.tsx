@@ -1,125 +1,148 @@
-import React, { useState } from 'react';
-import { X, Send, Loader2, FileText, Link as LinkIcon, AlertCircle } from 'lucide-react';
-import api from '../lib/api';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { X, Send, FileCheck, AlertCircle } from 'lucide-react';
 
-interface Job {
+interface Resume {
     id: number;
-    title: string;
-    companyName?: string;
+    versionName: string;
+    isMain: boolean;
 }
 
 interface ApplicationModalProps {
-    job: Job;
-    isOpen: boolean;
+    jobId: number;
+    jobTitle: string;
     onClose: () => void;
-    onSuccess: (jobId: number) => void;
+    onSuccess: () => void;
 }
 
-export default function ApplicationModal({ job, isOpen, onClose, onSuccess }: ApplicationModalProps) {
+const ApplicationModal: React.FC<ApplicationModalProps> = ({ jobId, jobTitle, onClose, onSuccess }) => {
+    const [resumes, setResumes] = useState<Resume[]>([]);
+    const [selectedResumeId, setSelectedResumeId] = useState<number | null>(null);
     const [coverLetter, setCoverLetter] = useState('');
-    const [resumeUrl, setResumeUrl] = useState('');
-    const [loading, setLoading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    if (!isOpen) return null;
+    useEffect(() => {
+        const fetchResumes = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await axios.get('http://localhost:5050/api/jobs/resumes', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setResumes(response.data.resumes);
+                const main = response.data.resumes.find((r: Resume) => r.isMain);
+                if (main) setSelectedResumeId(main.id);
+            } catch (err) {
+                console.error('Error fetching resumes:', err);
+            }
+        };
+        fetchResumes();
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
+        setSubmitting(true);
         setError(null);
 
+        console.log('Applying for jobId:', jobId);
+
         try {
-            await api.post(`/jobs/${job.id}/apply`, {
-                coverLetter,
-                resumeUrl
+            const token = localStorage.getItem('token');
+            await axios.post(`http://localhost:5050/api/jobs/${jobId}/apply`, {
+                resumeId: selectedResumeId,
+                coverLetter
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
             });
-            onSuccess(job.id);
-            onClose();
+            onSuccess();
         } catch (err: any) {
             setError(err.response?.data?.error || 'Failed to submit application. Please try again.');
         } finally {
-            setLoading(false);
+            setSubmitting(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-            <div className="w-full max-w-lg bg-secondary/95 backdrop-blur-2xl border border-muted/20 rounded-[32px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-                <div className="p-8 space-y-6">
-                    <div className="flex items-start justify-between">
-                        <div className="space-y-1">
-                            <h2 className="text-3xl font-black text-text tracking-tighter">Apply for <span className="text-primary">{job.title}</span></h2>
-                            <p className="text-muted font-bold text-lg">{job.companyName}</p>
-                        </div>
-                        <button
-                            onClick={onClose}
-                            className="p-2 hover:bg-muted/10 rounded-full transition-colors text-muted hover:text-text"
-                        >
-                            <X size={24} />
-                        </button>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <div className="bg-background border border-white/10 w-full max-w-xl rounded-3xl overflow-hidden shadow-2xl">
+                <div className="flex items-center justify-between p-6 border-b border-white/5">
+                    <div>
+                        <h3 className="text-xl font-bold text-white">Apply for Role</h3>
+                        <p className="text-primary text-sm font-medium uppercase tracking-wider">{jobTitle}</p>
                     </div>
+                    <button onClick={onClose} className="p-2 text-gray-400 hover:text-white transition-colors">
+                        <X className="w-6 h-6" />
+                    </button>
+                </div>
 
+                <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     {error && (
-                        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-500 font-medium">
-                            <AlertCircle size={20} />
+                        <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl flex items-center gap-3 text-red-400 text-sm">
+                            <AlertCircle className="w-5 h-5 flex-shrink-0" />
                             {error}
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="space-y-2">
-                            <label className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-muted">
-                                <FileText size={16} />
-                                Cover Letter
-                            </label>
-                            <textarea
-                                value={coverLetter}
-                                onChange={(e) => setCoverLetter(e.target.value)}
-                                placeholder="Tell us why you're a great fit (optional)..."
-                                className="w-full h-40 px-6 py-4 bg-background/50 border border-muted/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-text font-medium resize-none"
-                            />
+                    <div className="space-y-4">
+                        <label className="block text-sm font-semibold text-gray-300">Select Resume</label>
+                        <div className="grid gap-3">
+                            {resumes.map((resume) => (
+                                <div
+                                    key={resume.id}
+                                    onClick={() => setSelectedResumeId(resume.id)}
+                                    className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between ${selectedResumeId === resume.id
+                                        ? 'bg-primary/10 border-primary shadow-lg shadow-primary/10'
+                                        : 'bg-white/5 border-white/5 hover:border-white/20'
+                                        }`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${selectedResumeId === resume.id ? 'bg-primary' : 'bg-white/10'}`}>
+                                            <FileCheck className="w-4 h-4 text-white" />
+                                        </div>
+                                        <span className="font-medium text-white">{resume.versionName}</span>
+                                    </div>
+                                    {resume.isMain && <span className="text-[10px] bg-white/10 text-gray-400 px-2 py-1 rounded-full uppercase">Main</span>}
+                                </div>
+                            ))}
+                            {resumes.length === 0 && (
+                                <div className="text-sm text-gray-400 bg-white/5 p-4 rounded-xl border border-dashed border-white/10">
+                                    No resumes found. Please add a resume in your profile first.
+                                </div>
+                            )}
                         </div>
+                    </div>
 
-                        <div className="space-y-2">
-                            <label className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-muted">
-                                <LinkIcon size={16} />
-                                Resume URL
-                            </label>
-                            <input
-                                type="url"
-                                value={resumeUrl}
-                                onChange={(e) => setResumeUrl(e.target.value)}
-                                placeholder="Link to your portfolio or hosted resume..."
-                                className="w-full px-6 py-4 bg-background/50 border border-muted/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all text-text font-medium"
-                            />
-                        </div>
+                    <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-gray-300">Cover Letter (Optional)</label>
+                        <textarea
+                            className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-primary transition-colors min-h-[150px] text-sm"
+                            placeholder="Tell the hiring manager why you're a great fit..."
+                            value={coverLetter}
+                            onChange={(e) => setCoverLetter(e.target.value)}
+                        />
+                    </div>
 
-                        <div className="flex gap-4 pt-2">
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className="flex-1 px-8 py-4 font-black text-muted hover:text-text transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="flex-1 px-8 py-4 bg-primary text-white font-black rounded-2xl hover:bg-accent hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-2xl shadow-primary/20 flex items-center justify-center gap-3"
-                            >
-                                {loading ? (
-                                    <Loader2 className="animate-spin" size={20} />
-                                ) : (
-                                    <>
-                                        <Send size={20} />
-                                        Submit
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    <div className="flex gap-3 pt-2">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="flex-1 px-6 py-4 rounded-2xl text-white font-bold border border-white/10 hover:bg-white/5 transition-all"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={submitting || (resumes.length > 0 && !selectedResumeId)}
+                            className="flex-[2] bg-primary hover:bg-accent disabled:opacity-50 px-6 py-4 rounded-2xl text-white font-bold transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+                        >
+                            <Send className="w-5 h-5" />
+                            {submitting ? 'Submitting...' : 'Send Application'}
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     );
-}
+};
+
+export default ApplicationModal;

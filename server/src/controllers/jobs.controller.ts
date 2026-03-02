@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { eq, desc, and, gt, isNull, or } from 'drizzle-orm'; // Added missing operators
 import db from '../config/db';
-import { jobs, companies, skills, jobSkills, applications, users } from '../db/schema';
+import { jobs, companies, skills, jobSkills, applications, users, userResumes, applicationHistory } from '../db/schema';
 import { UserRole } from '../db/schema';
 import { sql } from 'drizzle-orm';
 
@@ -162,12 +162,54 @@ export const getMatchedJobs = async (req: AuthRequest, res: Response) => {
     }
 };
 
-// 5. POST /jobs/:id/apply - Apply for a job
+// 4.1 GET /resumes - List resumes
+export const getUserResumes = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        if (!req.user || req.user.role !== 'job_seeker') {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        const resumes = await db.select().from(userResumes).where(eq(userResumes.userId, userId!));
+        res.json({ resumes });
+    } catch (err) {
+        console.error('Error fetching resumes:', err);
+        res.status(500).json({ error: 'Failed to fetch resumes' });
+    }
+};
+
+// 4.2 POST /resumes - Upload/Create resume
+export const uploadResume = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        const { versionName, searchText, parsedContent, isMain } = req.body;
+
+        if (!req.user || req.user.role !== 'job_seeker') {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        const [newResume] = await db.insert(userResumes).values({
+            userId: userId!,
+            versionName: versionName || 'Default',
+            searchText,
+            parsedContent,
+            isMain: !!isMain,
+        }).returning();
+
+        res.status(201).json({ resume: newResume });
+    } catch (err) {
+        console.error('Error uploading resume:', err);
+        res.status(500).json({ error: 'Failed to upload resume' });
+    }
+};
+
+// 5. POST /jobs/:id/apply - Apply for a job using STORED PROCEDURE
 export const applyToJob = async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user?.id;
+        console.log('Backend applyToJob - Received jobId param:', req.params.id);
         const jobId = parseInt(req.params.id as string);
-        const { coverLetter, resumeUrl } = req.body;
+        const { coverLetter, resumeId } = req.body;
 
         if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });
@@ -177,40 +219,28 @@ export const applyToJob = async (req: AuthRequest, res: Response) => {
             return res.status(400).json({ error: 'Invalid job ID' });
         }
 
-        // Check if already applied
-        const [existing] = await db
-            .select()
-            .from(applications)
-            .where(and(eq(applications.userId, userId), eq(applications.jobId, jobId)));
+        // Use the submit_job_application procedure for transactional safety
+        await db.execute(sql`
+            CALL submit_job_application(
+                ${userId}::INT, 
+                ${jobId}::INT, 
+                ${resumeId ? sql`${resumeId}::INT` : sql`NULL`}, 
+                ${coverLetter || ''}
+            )
+        `);
 
-        if (existing) {
-            return res.status(400).json({ error: 'Already applied for this job' });
+        res.status(201).json({ message: 'Application submitted successfully' });
+    } catch (err: any) {
+        console.error('Error applying for job via procedure:', err);
+        // Handle RAISE EXCEPTION from Postgres
+        if (err.message.includes('already applied') || err.message.includes('no longer active')) {
+            return res.status(400).json({ error: err.message });
         }
-
-        // Check graduation status via DB function
-        const graduationQuery = sql`SELECT has_user_graduated(${userId}::INT) as graduated`;
-        const gradRows = (await db.execute(graduationQuery)).rows;
-        const hasGraduated = gradRows[0]?.graduated;
-
-        await db.insert(applications).values({
-            userId,
-            jobId,
-            coverLetter,
-            resumeUrl,
-            status: 'applied',
-        });
-
-        res.status(201).json({
-            message: 'Application submitted successfully',
-            meta: { hasGraduated }
-        });
-    } catch (err) {
-        console.error('Error applying for job:', err);
         res.status(500).json({ error: 'Failed to apply for job' });
     }
 };
 
-// 6. GET /jobs/applications/my - Get seeker's own applications
+// 6. GET /jobs/applications/my - Get seeker's own applications with history
 export const getMyApplications = async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user?.id;
@@ -231,6 +261,22 @@ export const getMyApplications = async (req: AuthRequest, res: Response) => {
             .where(eq(applications.userId, userId))
             .orderBy(desc(applications.appliedAt));
 
+        // Get history for these applications
+        const appIds = myApps.map(a => a.id);
+        if (appIds.length > 0) {
+            const history = await db
+                .select()
+                .from(applicationHistory)
+                .where(sql`${applicationHistory.applicationId} IN (${sql.join(appIds, sql`, `)})`)
+                .orderBy(desc(applicationHistory.createdAt));
+
+            const appsWithHistory = myApps.map(app => ({
+                ...app,
+                history: history.filter(h => h.applicationId === app.id)
+            }));
+            return res.json({ applications: appsWithHistory });
+        }
+
         res.json({ applications: myApps });
     } catch (err) {
         console.error('Error fetching applications:', err);
@@ -238,11 +284,12 @@ export const getMyApplications = async (req: AuthRequest, res: Response) => {
     }
 };
 
-// 7. GET /jobs/:id/applicants - Get applicants for a job (Company only)
+// 7. GET /jobs/:id/applicants - Get applicants for a job (Company only) with keyword search
 export const getJobApplicants = async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user?.id;
         const jobId = parseInt(req.params.id as string);
+        const { keyword } = req.query; // New: Full-text search keyword
 
         if (!userId || req.user?.role !== 'company') {
             return res.status(403).json({ error: 'Access denied' });
@@ -250,32 +297,35 @@ export const getJobApplicants = async (req: AuthRequest, res: Response) => {
 
         const companyId = await getCompanyIdForUser(userId);
 
-        // Ensure the job belongs to this company
-        const [job] = await db
-            .select()
-            .from(jobs)
-            .where(and(eq(jobs.id, jobId), eq(jobs.companyId, companyId!)));
+        // Prepare keyword search query if provided
+        const searchFilter = keyword
+            ? sql`AND ur.search_vector @@ plainto_tsquery('english', ${keyword as string})`
+            : sql``;
 
-        if (!job) {
-            return res.status(404).json({ error: 'Job not found or access denied' });
-        }
+        const query = sql`
+            SELECT 
+                a.id,
+                a.status,
+                a.applied_at as "appliedAt",
+                u.name as "userName",
+                u.email as "userEmail",
+                a.cover_letter as "coverLetter",
+                a.resume_url as "resumeUrl",
+                ur.id as "resumeId",
+                ur.version_name as "resumeVersion",
+                ts_headline('english', ur.search_text, plainto_tsquery('english', ${keyword || ''})) as "searchHighlight"
+            FROM ${applications} a
+            INNER JOIN ${users} u ON a.user_id = u.id
+            INNER JOIN ${jobs} j ON a.job_id = j.id
+            LEFT JOIN ${userResumes} ur ON a.user_id = ur.userId AND ur.is_main = true
+            WHERE a.job_id = ${jobId}
+                AND j.company_id = ${companyId!}
+                ${searchFilter}
+            ORDER BY a.applied_at DESC
+        `;
 
-        const applicants = await db
-            .select({
-                id: applications.id,
-                status: applications.status,
-                appliedAt: applications.appliedAt,
-                userName: users.name,
-                userEmail: users.email,
-                coverLetter: applications.coverLetter,
-                resumeUrl: applications.resumeUrl,
-            })
-            .from(applications)
-            .innerJoin(users, eq(applications.userId, users.id))
-            .where(eq(applications.jobId, jobId))
-            .orderBy(desc(applications.appliedAt));
-
-        res.json({ applicants });
+        const result = await db.execute(query);
+        res.json({ applicants: result.rows });
     } catch (err) {
         console.error('Error fetching applicants:', err);
         res.status(500).json({ error: 'Failed to fetch applicants' });
