@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET : string = process.env.JWT_SECRET!;
+const JWT_SECRET: string = process.env.JWT_SECRET!;
 
 export const generateToken = (userId: number, role: string): string => {
   return jwt.sign({ userId, role }, JWT_SECRET, {
@@ -10,7 +10,7 @@ export const generateToken = (userId: number, role: string): string => {
 
 export const verifyToken = (token: string) => {
   try {
-    return jwt.verify(token, JWT_SECRET) as { userId: string, role: string };
+    return jwt.verify(token, JWT_SECRET) as { userId: number, role: string };
   } catch (error) {
     return null;
   }

@@ -17,7 +17,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
       .json({ message: 'Invalid token' });
   }
 
-  (req as any).user = { id: decoded.userId, role: decoded.role };
+  (req as any).user = { id: Number(decoded.userId), role: decoded.role };
   next();
 };
 
@@ -27,7 +27,7 @@ export const optionalAuthenticate = (req: Request, res: Response, next: NextFunc
     const token = authHeader.split(' ')[1];
     const decoded = verifyToken(token);
     if (decoded) {
-      (req as any).user = { id: decoded.userId, role: decoded.role };
+      (req as any).user = { id: Number(decoded.userId), role: decoded.role };
     }
   }
   next();

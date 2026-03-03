@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, MapPin, Briefcase, DollarSign, Calendar, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import ApplicationModal from './ApplicationModal';
+import api from '../lib/api';
 
 interface Job {
     id: number;
@@ -30,6 +31,11 @@ interface JobDetailsModalProps {
 const JobDetailsModal: React.FC<JobDetailsModalProps> = ({ job, onClose }) => {
     const [isApplied, setIsApplied] = useState(job.hasApplied);
     const [showApplyModal, setShowApplyModal] = useState(false);
+
+    // Trigger view count increment on the backend whenever the modal opens
+    useEffect(() => {
+        api.get(`/jobs/${job.id}`).catch(() => {/* ignore errors, this is just for tracking */ });
+    }, [job.id]);
 
     const handleApplySuccess = () => {
         setIsApplied(true);

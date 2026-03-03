@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import api from '../lib/api';
-import { Briefcase, MapPin, Clock, Loader2, CheckCircle, Clock3, XCircle, ChevronDown } from 'lucide-react';
+import { Briefcase, MapPin, Clock, Loader2, CheckCircle, Clock3, XCircle, ChevronDown, Eye, Mic, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import ApplicationHistory from '../components/ApplicationHistory';
+
 
 interface Application {
     id: number;
@@ -14,14 +15,18 @@ interface Application {
     history?: any[];
 }
 
-const statusStyles: Record<string, { color: string, bg: string, icon: any }> = {
-    applied: { color: 'text-primary', bg: 'bg-primary/10', icon: Clock3 },
-    reviewed: { color: 'text-blue-500', bg: 'bg-blue-500/10', icon: Clock3 },
-    interviewing: { color: 'text-accent', bg: 'bg-accent/10', icon: Clock },
-    offered: { color: 'text-emerald-500', bg: 'bg-emerald-500/10', icon: CheckCircle },
-    rejected: { color: 'text-red-500', bg: 'bg-red-500/10', icon: XCircle },
-    hired: { color: 'text-emerald-600', bg: 'bg-emerald-600/10', icon: CheckCircle },
+const statusStyles: Record<string, { color: string, bg: string, border: string, icon: any, label: string }> = {
+    applied: { color: 'text-primary', bg: 'bg-primary/10', border: 'border-primary/20', icon: Clock3, label: 'Applied' },
+    reviewed: { color: 'text-blue-400', bg: 'bg-blue-500/15', border: 'border-blue-500/25', icon: Eye, label: 'Reviewed' },
+    interviewing: { color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/20', icon: Mic, label: 'Interviewing' },
+    offered: { color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', icon: CheckCircle, label: 'Offered' },
+    rejected: { color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20', icon: XCircle, label: 'Rejected' },
+    hired: { color: 'text-emerald-500', bg: 'bg-emerald-600/15', border: 'border-emerald-600/25', icon: CheckCircle, label: 'Hired 🎉' },
+    withdrawn: { color: 'text-gray-400', bg: 'bg-gray-500/10', border: 'border-gray-500/20', icon: X, label: 'Withdrawn' },
 };
+
+const defaultStatus = statusStyles.applied;
+
 
 export default function MyApplicationsPage() {
     const [applications, setApplications] = useState<Application[]>([]);
@@ -70,7 +75,8 @@ export default function MyApplicationsPage() {
                 ) : applications.length > 0 ? (
                     <div className="grid gap-6">
                         {applications.map(app => {
-                            const statusInfo = statusStyles[app.status] || statusStyles.applied;
+                            const statusInfo = statusStyles[app.status] ?? defaultStatus;
+
                             const StatusIcon = statusInfo.icon;
                             const isExpanded = expandedAppId === app.id;
 
@@ -99,10 +105,11 @@ export default function MyApplicationsPage() {
 
                                         <div className="flex items-center gap-6">
                                             <div className="text-right hidden md:block space-y-2">
-                                                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-black text-xs uppercase tracking-widest ${statusInfo.bg} ${statusInfo.color}`}>
-                                                    <StatusIcon size={14} />
-                                                    {app.status}
+                                                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-black text-xs uppercase tracking-widest border ${statusInfo.bg} ${statusInfo.border} ${statusInfo.color}`}>
+                                                    <StatusIcon size={13} />
+                                                    {statusInfo.label}
                                                 </div>
+
                                                 <p className="text-xs font-bold text-gray-600 uppercase tracking-widest">
                                                     Applied {formatDistanceToNow(new Date(app.appliedAt))} ago
                                                 </p>

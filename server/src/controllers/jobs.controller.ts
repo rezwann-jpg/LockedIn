@@ -171,6 +171,12 @@ export const getJobById = async (req: Request, res: Response) => {
             return res.status(404).json({ error: 'Job not found' });
         }
 
+        // Increment view count (fire-and-forget, don't await to keep response fast)
+        db.update(jobs)
+            .set({ viewsCount: sql`${jobs.viewsCount} + 1` })
+            .where(eq(jobs.id, jobId))
+            .catch(err => console.error('Failed to increment views_count:', err));
+
         // Format for response to be easier to work with
         const formattedJob = {
             ...jobWithDetails[0].job,
@@ -318,6 +324,39 @@ export const uploadResume = async (req: AuthRequest, res: Response) => {
     }
 };
 
+// 4.3 DELETE /resumes/:id - Delete resume
+export const deleteResume = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        const resumeId = parseInt(req.params.id as string);
+
+        if (!req.user || req.user.role !== 'job_seeker') {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        if (isNaN(resumeId)) {
+            return res.status(400).json({ error: 'Invalid resume ID' });
+        }
+
+        // Verify the resume belongs to this user before deleting
+        const [existing] = await db
+            .select({ id: userResumes.id })
+            .from(userResumes)
+            .where(and(eq(userResumes.id, resumeId), eq(userResumes.userId, userId!)))
+            .limit(1);
+
+        if (!existing) {
+            return res.status(404).json({ error: 'Resume not found' });
+        }
+
+        await db.delete(userResumes).where(eq(userResumes.id, resumeId));
+        res.json({ message: 'Resume deleted successfully' });
+    } catch (err) {
+        console.error('Error deleting resume:', err);
+        res.status(500).json({ error: 'Failed to delete resume' });
+    }
+};
+
 // 5. POST /jobs/:id/apply - Apply for a job using STORED PROCEDURE
 export const applyToJob = async (req: AuthRequest, res: Response) => {
     try {
@@ -432,7 +471,7 @@ export const getJobApplicants = async (req: AuthRequest, res: Response) => {
             FROM ${applications} a
             INNER JOIN ${users} u ON a.user_id = u.id
             INNER JOIN ${jobs} j ON a.job_id = j.id
-            LEFT JOIN ${userResumes} ur ON a.user_id = ur.userId AND ur.is_main = true
+            LEFT JOIN ${userResumes} ur ON a.user_id = ur.user_id AND ur.is_main = true
             WHERE a.job_id = ${jobId}
                 AND j.company_id = ${companyId!}
                 ${searchFilter}

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/useAuth';
 import api from '../../lib/api';
-import { Plus, Users, Briefcase, Eye, Calendar, Loader2 } from 'lucide-react';
+import { Plus, Users, Briefcase, Eye, Calendar, Loader2, Edit2 } from 'lucide-react';
 import { AxiosError } from 'axios';
 import JobApplicantsList from '../../components/JobApplicantsList';
 
@@ -190,12 +190,21 @@ export default function EmployerDashboard() {
                                                 </span>
                                                 <span className="text-[10px] text-muted font-black uppercase tracking-[0.2em] mt-2 block">Views</span>
                                             </div>
-                                            <button
-                                                className="px-10 py-4 bg-background border-2 border-muted/10 rounded-2xl text-sm font-black uppercase tracking-widest text-text hover:bg-primary hover:text-white hover:border-primary transition-all duration-300 shadow-2xl hover:scale-[1.05]"
-                                                onClick={() => setSelectedJob({ id: job.id, title: job.title })}
-                                            >
-                                                Manage
-                                            </button>
+                                            <div className="flex items-center gap-3">
+                                                <button
+                                                    className="p-4 bg-background border-2 border-muted/10 rounded-2xl text-muted hover:text-primary hover:border-primary transition-all duration-300 shadow-xl hover:scale-[1.05]"
+                                                    onClick={() => navigate(`/jobs/edit/${job.id}`)}
+                                                    title="Edit Job"
+                                                >
+                                                    <Edit2 size={20} />
+                                                </button>
+                                                <button
+                                                    className="px-10 py-4 bg-background border-2 border-muted/10 rounded-2xl text-sm font-black uppercase tracking-widest text-text hover:bg-primary hover:text-white hover:border-primary transition-all duration-300 shadow-2xl hover:scale-[1.05]"
+                                                    onClick={() => setSelectedJob({ id: job.id, title: job.title })}
+                                                >
+                                                    Manage
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

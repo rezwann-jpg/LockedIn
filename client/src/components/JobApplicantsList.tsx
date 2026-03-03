@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../lib/api';
-import { Mail, Calendar, FileText, CheckCircle, XCircle, Clock, Loader2, Users, Search, Target } from 'lucide-react';
+import { Mail, Calendar, FileText, CheckCircle, XCircle, Clock, Loader2, Users, Search, Target, Eye } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface Applicant {
@@ -168,6 +168,14 @@ export default function JobApplicantsList({ jobId, jobTitle, onClose }: JobAppli
                                     </div>
 
                                     <div className="flex gap-2">
+                                        <button
+                                            disabled={updatingId === app.id || app.status === 'reviewed'}
+                                            onClick={() => handleUpdateStatus(app.id, 'reviewed')}
+                                            className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-xl transition-colors disabled:opacity-30"
+                                            title="Mark as Reviewed"
+                                        >
+                                            <Eye size={22} />
+                                        </button>
                                         <button
                                             disabled={updatingId === app.id}
                                             onClick={() => handleUpdateStatus(app.id, 'rejected')}
