@@ -30,6 +30,7 @@ function App() {
           <Route path="/profile" element={<ProfileViewPage />} />
           <Route path="/employer/dashboard" element={<EmployerDashboard />} />
           <Route path="/jobs/post" element={<PostJobPage />} />
+          <Route path="/jobs/edit/:id" element={<PostJobPage />} />
           <Route path="/onboarding/company-profile" element={<CompanyOnboardingPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

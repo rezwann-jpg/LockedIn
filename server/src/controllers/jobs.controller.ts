@@ -146,6 +146,121 @@ export const getCompanyJobs = async (req: AuthRequest, res: Response) => {
     }
 };
 
+// GET /jobs/:id - Get a single job by ID
+export const getJobById = async (req: Request, res: Response) => {
+    try {
+        const jobId = parseInt(req.params.id as string);
+        if (isNaN(jobId)) {
+            return res.status(400).json({ error: 'Invalid job ID' });
+        }
+
+        const jobWithDetails = await db
+            .select({
+                job: jobs,
+                company: companies,
+                skills: sql`array_agg(${skills.name})`.as('job_skills')
+            })
+            .from(jobs)
+            .innerJoin(companies, eq(jobs.companyId, companies.id))
+            .leftJoin(jobSkills, eq(jobs.id, jobSkills.jobId))
+            .leftJoin(skills, eq(jobSkills.skillId, skills.id))
+            .where(eq(jobs.id, jobId))
+            .groupBy(jobs.id, companies.id);
+
+        if (!jobWithDetails || jobWithDetails.length === 0) {
+            return res.status(404).json({ error: 'Job not found' });
+        }
+
+        // Format for response to be easier to work with
+        const formattedJob = {
+            ...jobWithDetails[0].job,
+            company: jobWithDetails[0].company,
+            skills: (jobWithDetails[0].skills as unknown as string[]).filter((s: string | null) => s !== null),
+        };
+
+        res.json({ job: formattedJob });
+    } catch (err) {
+        console.error('Error fetching job by ID:', err);
+        res.status(500).json({ error: 'Failed to fetch job' });
+    }
+};
+
+// PUT /company/jobs/:id - Update job (Company only)
+export const updateJob = async (req: AuthRequest, res: Response) => {
+    try {
+        const user = req.user;
+        const jobId = parseInt(req.params.id as string);
+
+        if (isNaN(jobId)) {
+            return res.status(400).json({ error: 'Invalid job ID' });
+        }
+
+        if (!user || user.role !== 'company') {
+            return res.status(403).json({ error: 'Only companies can update jobs' });
+        }
+
+        const companyId = await getCompanyIdForUser(user.id);
+        if (!companyId) {
+            return res.status(400).json({
+                error: 'Company profile not found.'
+            });
+        }
+
+        // Check if job exists and belongs to company
+        const [existingJob] = await db
+            .select()
+            .from(jobs)
+            .where(and(eq(jobs.id, jobId), eq(jobs.companyId, companyId)));
+
+        if (!existingJob) {
+            return res.status(404).json({ error: 'Job not found or access denied' });
+        }
+
+        // Update the job details
+        const updateData: any = {};
+        const fieldsToUpdate = [
+            'title', 'description', 'requirements', 'responsibilities',
+            'location', 'salaryMin', 'salaryMax', 'salaryCurrency',
+            'jobType', 'experienceLevel', 'categoryId', 'remote', 'isActive'
+        ];
+
+        for (const field of fieldsToUpdate) {
+            if (req.body[field] !== undefined) {
+                updateData[field] = req.body[field];
+            }
+        }
+
+        // Ensure salary is correctly nullified if empty
+        if (updateData.salaryMin === '') updateData.salaryMin = null;
+        if (updateData.salaryMax === '') updateData.salaryMax = null;
+        // set updatedAt
+        updateData.updatedAt = new Date();
+
+        const [updatedJob] = await db.update(jobs)
+            .set(updateData)
+            .where(eq(jobs.id, jobId))
+            .returning();
+
+        // Handle skills insertion/update
+        if (req.body.skills && Array.isArray(req.body.skills)) {
+            const skillNames = req.body.skills.filter((s: any) => typeof s === 'string');
+            const skillArraySql = sql`ARRAY[${skillNames.length > 0 ? sql.join(skillNames.map((s: string) => sql`${s}`), sql`, `) : sql`''`}]::TEXT[]`;
+            // Ensure if empty array we pass an empty array to update_job_skills
+            if (skillNames.length > 0) {
+                await db.execute(sql`CALL update_job_skills(${jobId}::INT, ${skillArraySql})`);
+            } else {
+                // If they cleared all skills, we should delete them
+                await db.delete(jobSkills).where(eq(jobSkills.jobId, jobId));
+            }
+        }
+
+        res.json({ job: updatedJob, message: 'Job updated successfully' });
+    } catch (err) {
+        console.error('Error updating job:', err);
+        res.status(500).json({ error: 'Failed to update job' });
+    }
+};
+
 // 4. GET /jobs/matched - Recommended jobs for user
 export const getMatchedJobs = async (req: AuthRequest, res: Response) => {
     try {

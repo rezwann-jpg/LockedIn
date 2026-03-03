@@ -17,14 +17,14 @@ async function seed() {
             name: 'TechCorp Hiring',
             role: 'company',
             passwordHash: hashedCompanyPassword,
-        }).onConflictDoNothing().returning();
+        }).onConflictDoUpdate({ target: users.email, set: { name: 'TechCorp Hiring' } }).returning();
 
         const [seekerUser] = await db.insert(users).values({
             email: 'dev@example.com',
             name: 'John Doe',
             role: 'job_seeker',
             passwordHash: hashedJobSeekerPassword,
-        }).onConflictDoNothing().returning();
+        }).onConflictDoUpdate({ target: users.email, set: { name: 'John Doe' } }).returning();
 
         // 2. Create Companies
         console.log('Creating companies...');
@@ -53,12 +53,12 @@ async function seed() {
         const [softwareDev] = await db.insert(categories).values({
             name: 'Software Development',
             description: 'Building the future with code.',
-        }).onConflictDoNothing().returning();
+        }).onConflictDoUpdate({ target: categories.name, set: { description: 'Building the future with code.' } }).returning();
 
         const [designCat] = await db.insert(categories).values({
             name: 'Design',
             description: 'Crafting beautiful user experiences.',
-        }).onConflictDoNothing().returning();
+        }).onConflictDoUpdate({ target: categories.name, set: { description: 'Crafting beautiful user experiences.' } }).returning();
 
         // 4. Create Skills
         console.log('Creating skills...');

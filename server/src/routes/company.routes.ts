@@ -6,7 +6,8 @@ import {
 } from '../controllers/company.controller';
 import {
     createJob,
-    getCompanyJobs
+    getCompanyJobs,
+    updateJob
 } from '../controllers/jobs.controller';
 
 const router = Router();
@@ -18,5 +19,6 @@ router.post('/profile', setupCompanyProfile);
 
 router.get('/jobs', getCompanyJobs);
 router.post('/jobs', createJob);
+router.put('/jobs/:id', updateJob);
 
 export default router;

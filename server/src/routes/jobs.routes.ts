@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
     createJob,
     getJobs,
+    getJobById,
     getCompanyJobs,
     getMatchedJobs,
     applyToJob,
@@ -18,6 +19,9 @@ const router = Router();
 
 // Public: View all jobs (Optional auth for personalized matching)
 router.get('/', optionalAuthenticate, getJobs);
+
+// Public: Get job by ID
+router.get('/:id', getJobById);
 
 // Public: Market trends
 router.get('/trends', getMarketTrends);
