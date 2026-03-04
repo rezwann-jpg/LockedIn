@@ -1,13 +1,13 @@
+// src/db/scripts/setup/advanced.ts
 import { sql } from 'drizzle-orm';
-import db from '../config/db';
+import db from '../../../config/db';
 
-async function main() {
+export async function setupAdvanced() {
     console.log('Pushing Advanced Database Logic...');
 
-    try {
-        // 1. Transactional Procedure for Submitting Applications
-        console.log('Creating procedure: submit_job_application...');
-        await db.execute(sql`
+    // 1. Transactional Procedure for Submitting Applications
+    console.log('Creating procedure: submit_job_application...');
+    await db.execute(sql`
       CREATE OR REPLACE PROCEDURE submit_job_application(
         p_user_id INT,
         p_job_id INT,
@@ -37,29 +37,28 @@ async function main() {
         INSERT INTO applications (user_id, job_id, cover_letter, status)
         VALUES (p_user_id, p_job_id, p_cover_letter, 'applied');
 
-        -- Note: Trigger 'update_job_stats' in setup_extensions.ts handles the count increment
-        -- commit is implicit in procedure call unless handled by caller
+        -- Note: Trigger 'update_job_stats' handles the count increment
       END;
       $$;
     `);
 
-        // 2. Trigger Function for Status Auditing
-        console.log('Creating trigger function: log_status_change...');
-        await db.execute(sql`
+    // 2. Trigger Function for Status Auditing
+    console.log('Creating trigger function: log_status_change...');
+    await db.execute(sql`
       CREATE OR REPLACE FUNCTION log_status_change()
       RETURNS TRIGGER AS $$
       BEGIN
         IF (OLD.status IS DISTINCT FROM NEW.status) THEN
           INSERT INTO application_history (application_id, old_status, new_status, changed_by)
-          VALUES (NEW.id, OLD.status, NEW.status, NULL); -- changed_by to be set by app logic if possible
+          VALUES (NEW.id, OLD.status, NEW.status, NULL);
         END IF;
         RETURN NEW;
       END;
       $$ LANGUAGE plpgsql;
     `);
 
-        console.log('Creating trigger: trg_log_app_status...');
-        await db.execute(sql`
+    console.log('Creating trigger: trg_log_app_status...');
+    await db.execute(sql`
       DROP TRIGGER IF EXISTS trg_log_app_status ON applications;
       CREATE TRIGGER trg_log_app_status
       AFTER UPDATE ON applications
@@ -67,9 +66,9 @@ async function main() {
       EXECUTE FUNCTION log_status_change();
     `);
 
-        // 3. Full-Text Search Vector Update Trigger
-        console.log('Creating function: update_search_vector...');
-        await db.execute(sql`
+    // 3. Full-Text Search Vector Update Trigger
+    console.log('Creating function: update_search_vector...');
+    await db.execute(sql`
       CREATE OR REPLACE FUNCTION update_search_vector()
       RETURNS TRIGGER AS $$
       BEGIN
@@ -83,8 +82,8 @@ async function main() {
       $$ LANGUAGE plpgsql;
     `);
 
-        console.log('Creating trigger: trg_update_resume_vector...');
-        await db.execute(sql`
+    console.log('Creating trigger: trg_update_resume_vector...');
+    await db.execute(sql`
       DROP TRIGGER IF EXISTS trg_update_resume_vector ON user_resumes;
       CREATE TRIGGER trg_update_resume_vector
       BEFORE INSERT OR UPDATE ON user_resumes
@@ -92,9 +91,9 @@ async function main() {
       EXECUTE FUNCTION update_search_vector();
     `);
 
-        // 4. Analytical Query View: Skill Match Density
-        console.log('Creating view: category_demand_analytics...');
-        await db.execute(sql`
+    // 4. Analytical Query View: Category Demand
+    console.log('Creating view: category_demand_analytics...');
+    await db.execute(sql`
       CREATE OR REPLACE VIEW category_demand_analytics AS
       SELECT 
         c.name as category_name,
@@ -108,12 +107,5 @@ async function main() {
       ORDER BY applications_per_job DESC;
     `);
 
-        console.log('Advanced Database Logic setup completed.');
-        process.exit(0);
-    } catch (err) {
-        console.error('Failed to setup advanced DB logic:', err);
-        process.exit(1);
-    }
+    console.log('Advanced Database Logic setup completed.');
 }
-
-main();

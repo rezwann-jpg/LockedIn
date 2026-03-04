@@ -34,13 +34,9 @@
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
     "start": "node dist/server.ts",
-    "db:setup": "ts-node src/db/setup_extensions.ts",
-    "db:setup:advanced": "ts-node src/db/advanced_db_setup.ts",
-    "db:migrate:subscriptions": "ts-node src/db/subscription_migration.ts",
+    "db:migrate": "ts-node src/db/migrate.ts",
     "db:seed": "ts-node src/db/seed.ts",
-    "db:seed-users": "ts-node src/db/seed_user.ts",
-    "db:seed-jobs": "ts-node src/db/seed_jobs.ts",
-    "db:init": "npm run db:setup && npm run db:setup:advanced && npm run db:seed && npm run db:seed-users && npm run db:seed-jobs",
+    "db:init": "npm run db:migrate && npm run db:seed",
     "test": "echo \"Error: no test specified\" && exit 1"
   }
 }
