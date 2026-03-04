@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/useAuth';
 import { LogOut, User, Briefcase, LayoutDashboard, Menu, X, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
+import NotificationBell from '../NotificationBell';
 
 export default function Navbar() {
     const { user, logout } = useAuth();
@@ -55,7 +56,9 @@ export default function Navbar() {
 
                     <div className="hidden sm:flex sm:items-center sm:gap-4">
                         {user ? (
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-3">
+                                {/* Notification bell — visible only to job seekers */}
+                                <NotificationBell />
                                 <span className="text-sm text-muted">
                                     Hi, <span className="text-text font-medium">{user.name}</span>
                                 </span>
@@ -115,16 +118,20 @@ export default function Navbar() {
                     <div className="pt-4 pb-3 border-t border-muted/20 px-4">
                         {user ? (
                             <div className="space-y-4">
-                                <div className="flex items-center px-3">
-                                    <div className="flex-shrink-0">
-                                        <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-                                            {(user.name || user.email).charAt(0).toUpperCase()}
+                                <div className="flex items-center justify-between px-3">
+                                    <div className="flex items-center">
+                                        <div className="flex-shrink-0">
+                                            <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+                                                {(user.name || user.email).charAt(0).toUpperCase()}
+                                            </div>
+                                        </div>
+                                        <div className="ml-3">
+                                            <div className="text-base font-medium text-text">{user.name}</div>
+                                            <div className="text-sm font-medium text-muted">{user.email}</div>
                                         </div>
                                     </div>
-                                    <div className="ml-3">
-                                        <div className="text-base font-medium text-text">{user.name}</div>
-                                        <div className="text-sm font-medium text-muted">{user.email}</div>
-                                    </div>
+                                    {/* Notification bell in mobile menu */}
+                                    <NotificationBell />
                                 </div>
                                 <div className="space-y-1">
                                     <button

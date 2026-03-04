@@ -36,6 +36,7 @@
     "start": "node dist/server.ts",
     "db:setup": "ts-node src/db/setup_extensions.ts",
     "db:setup:advanced": "ts-node src/db/advanced_db_setup.ts",
+    "db:migrate:subscriptions": "ts-node src/db/subscription_migration.ts",
     "db:seed": "ts-node src/db/seed.ts",
     "db:seed-users": "ts-node src/db/seed_user.ts",
     "db:seed-jobs": "ts-node src/db/seed_jobs.ts",

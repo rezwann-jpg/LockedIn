@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { X, MapPin, Briefcase, DollarSign, Calendar, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import ApplicationModal from './ApplicationModal';
+import SubscribeButton from './SubscribeButton';
+import { useAuth } from '../context/useAuth';
 import api from '../lib/api';
 
 interface Job {
     id: number;
     title: string;
+    companyId?: number;
     companyName: string;
     companyLogo?: string;
     location: string;
@@ -29,6 +32,7 @@ interface JobDetailsModalProps {
 }
 
 const JobDetailsModal: React.FC<JobDetailsModalProps> = ({ job, onClose }) => {
+    const { user } = useAuth();
     const [isApplied, setIsApplied] = useState(job.hasApplied);
     const [showApplyModal, setShowApplyModal] = useState(false);
 
@@ -138,16 +142,26 @@ const JobDetailsModal: React.FC<JobDetailsModalProps> = ({ job, onClose }) => {
 
                     {/* Footer Action */}
                     <div className="p-8 md:p-12 border-t border-white/5 bg-white/5 backdrop-blur-xl shrink-0">
-                        <button
-                            onClick={() => setShowApplyModal(true)}
-                            disabled={isApplied}
-                            className={`w-full py-6 font-black rounded-3xl transition-all duration-300 flex items-center justify-center gap-4 text-2xl shadow-2xl ${isApplied
-                                ? 'bg-emerald-500/10 text-emerald-500 cursor-default border border-emerald-500/20'
-                                : 'bg-primary text-white hover:bg-accent hover:scale-[1.02] active:scale-[0.98] shadow-primary/20 hover:shadow-primary/40 uppercase tracking-widest'
-                                }`}
-                        >
-                            {isApplied ? <><CheckCircle size={32} /> Already Applied</> : 'Submit Application'}
-                        </button>
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                            {/* Subscribe Button — only for job seekers */}
+                            {job.companyId && user?.role === 'job_seeker' && (
+                                <SubscribeButton
+                                    companyId={job.companyId}
+                                    companyName={job.companyName}
+                                    className="sm:w-auto"
+                                />
+                            )}
+                            <button
+                                onClick={() => setShowApplyModal(true)}
+                                disabled={isApplied}
+                                className={`flex-1 py-6 font-black rounded-3xl transition-all duration-300 flex items-center justify-center gap-4 text-2xl shadow-2xl ${isApplied
+                                    ? 'bg-emerald-500/10 text-emerald-500 cursor-default border border-emerald-500/20'
+                                    : 'bg-primary text-white hover:bg-accent hover:scale-[1.02] active:scale-[0.98] shadow-primary/20 hover:shadow-primary/40 uppercase tracking-widest'
+                                    }`}
+                            >
+                                {isApplied ? <><CheckCircle size={32} /> Already Applied</> : 'Submit Application'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

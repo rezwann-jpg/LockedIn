@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { eq, desc, and, gt, isNull, or } from 'drizzle-orm'; // Added missing operators
 import db from '../config/db';
-import { jobs, companies, skills, jobSkills, applications, users, userResumes, applicationHistory } from '../db/schema';
+import { jobs, companies, skills, jobSkills, applications, users, userResumes, applicationHistory, companySubscriptions, notifications } from '../db/schema';
 import { UserRole } from '../db/schema';
 import { sql } from 'drizzle-orm';
 
@@ -83,12 +83,54 @@ export const createJob = async (req: AuthRequest, res: Response) => {
             }
         }
 
+        // Notify all subscribers of this company (fire-and-forget)
+        notifyCompanySubscribers(companyId, newJob).catch((err) =>
+            console.error('Failed to send subscriber notifications:', err)
+        );
+
         res.status(201).json({ job: newJob });
     } catch (err) {
         console.error('Error creating job:', err);
         res.status(500).json({ error: 'Failed to create job' });
     }
 };
+
+// Helper: Notify all users subscribed to a company about a new job
+async function notifyCompanySubscribers(
+    companyId: number,
+    job: { id: number; title: string; location: string }
+): Promise<void> {
+    // Get the company name for the notification title
+    const [company] = await db
+        .select({ name: companies.name })
+        .from(companies)
+        .where(eq(companies.id, companyId))
+        .limit(1);
+
+    if (!company) return;
+
+    // Get all subscribers
+    const subscribers = await db
+        .select({ userId: companySubscriptions.userId })
+        .from(companySubscriptions)
+        .where(eq(companySubscriptions.companyId, companyId));
+
+    if (subscribers.length === 0) return;
+
+    // Bulk insert notifications for all subscribers
+    const notificationRows = subscribers.map((sub) => ({
+        userId: sub.userId,
+        type: 'new_job' as const,
+        title: `New job at ${company.name}`,
+        message: `${job.title} — ${job.location}`,
+        jobId: job.id,
+        companyId,
+        isRead: false,
+    }));
+
+    await db.insert(notifications).values(notificationRows);
+    console.log(`Sent ${notificationRows.length} notifications for job ${job.id}`);
+}
 
 import { getJobsListing } from '../db/queries';
 

@@ -61,6 +61,7 @@ export const getJobsListing = async (options: {
         j.category_id as "categoryId",
         j.posted_at as "postedAt",
         j.remote,
+        c.id as "companyId",
         c.name as "companyName",
         c.logo_url as "companyLogo",
         j.application_count as "applicationCount",
@@ -81,7 +82,7 @@ export const getJobsListing = async (options: {
         ${remote !== undefined ? sql`AND j.remote = ${remote}` : sql``}
         ${salaryMin ? sql`AND (j.salary_min >= ${salaryMin} OR j.salary_max >= ${salaryMin})` : sql``}
         ${locationPattern ? sql`AND j.location ILIKE ${locationPattern}` : sql``}
-        ${searchPattern ? sql`AND (j.title ILIKE ${searchPattern} OR j.description ILIKE ${searchPattern})` : sql``}
+        ${searchPattern ? sql`AND (j.title ILIKE ${searchPattern} OR j.description ILIKE ${searchPattern} OR c.name ILIKE ${searchPattern})` : sql``}
       ORDER BY 
         ${sortBy === 'match' ? sql`"matchPercentage" DESC, ` : sql``}
         j.posted_at DESC

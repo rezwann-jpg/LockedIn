@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../lib/api';
-import { Briefcase, MapPin, Clock, Search, Loader2, ArrowUpDown, CheckCircle, SlidersHorizontal, DollarSign, Globe } from 'lucide-react';
+import { Briefcase, MapPin, Clock, Search, Loader2, ArrowUpDown, CheckCircle, SlidersHorizontal, DollarSign, Globe, Users } from 'lucide-react';
 import { useAuth } from '../context/useAuth';
 import ApplicationModal from '../components/ApplicationModal';
 import JobDetailsModal from '../components/JobDetailsModal';
+import MySubscriptions from '../components/MySubscriptions';
 
 type Job = {
     id: number;
@@ -16,6 +18,7 @@ type Job = {
     salaryMin: number | null;
     salaryMax: number | null;
     postedAt: string;
+    companyId?: number;
     companyName?: string;
     companyLogo?: string;
     matchPercentage?: number;
@@ -33,7 +36,8 @@ export default function JobSearchPage() {
     const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
     const [selectedCategory, setSelectedCategory] = useState<string>('');
     const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
     const [sortOrder, setSortOrder] = useState<'recent' | 'match'>('recent');
     const [appliedJobs, setAppliedJobs] = useState<number[]>([]);
 
@@ -46,6 +50,7 @@ export default function JobSearchPage() {
     // Modal State
     const [selectedJob, setSelectedJob] = useState<Job | null>(null);
     const [viewingJob, setViewingJob] = useState<Job | null>(null);
+    const [showSubscriptions, setShowSubscriptions] = useState(false);
 
     const fetchJobs = async () => {
         setLoading(true);
@@ -75,6 +80,13 @@ export default function JobSearchPage() {
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
             fetchJobs();
+            // Update URL search param
+            if (searchTerm) {
+                searchParams.set('search', searchTerm);
+            } else {
+                searchParams.delete('search');
+            }
+            setSearchParams(searchParams, { replace: true });
         }, 300);
 
         return () => clearTimeout(delayDebounceFn);
@@ -96,6 +108,30 @@ export default function JobSearchPage() {
         setAppliedJobs((prev: number[]) => [...prev, jobId]);
     };
 
+    // Sync searchTerm with URL search param changes
+    useEffect(() => {
+        const querySearch = searchParams.get('search') || '';
+        if (querySearch !== searchTerm) {
+            setSearchTerm(querySearch);
+        }
+    }, [searchParams]);
+
+    // Auto-open job modal from notification highlight
+    useEffect(() => {
+        if (jobs.length > 0 && !viewingJob) {
+            const highlightId = searchParams.get('highlight');
+            if (highlightId) {
+                const job = jobs.find(j => j.id === parseInt(highlightId));
+                if (job) {
+                    setViewingJob(job);
+                    // ONLY clear the highlight param, don't wipe everything else
+                    searchParams.delete('highlight');
+                    setSearchParams(searchParams, { replace: true });
+                }
+            }
+        }
+    }, [jobs, viewingJob, searchParams, setSearchParams]);
+
     return (
         <div className="min-h-[calc(100vh-64px)] bg-background p-6 md:p-12 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
@@ -111,13 +147,30 @@ export default function JobSearchPage() {
                         </h1>
                         <p className="text-muted text-lg md:text-xl max-w-2xl font-bold uppercase tracking-wide">Opportunities designed for your growth.</p>
                     </div>
-                    <button
-                        onClick={() => setShowFilters(!showFilters)}
-                        className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all ${showFilters ? 'bg-primary text-white shadow-2xl scale-105' : 'bg-secondary/50 text-text border border-muted/10 hover:border-primary/50'}`}
-                    >
-                        <SlidersHorizontal size={20} />
-                        Filters
-                    </button>
+                    <div className="flex items-center gap-4">
+                        {user?.role === 'job_seeker' && (
+                            <button
+                                onClick={() => {
+                                    setShowSubscriptions(!showSubscriptions);
+                                    if (showFilters) setShowFilters(false);
+                                }}
+                                className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all ${showSubscriptions ? 'bg-primary text-white shadow-2xl scale-105' : 'bg-secondary/50 text-text border border-muted/10 hover:border-primary/50'}`}
+                            >
+                                <Users size={20} />
+                                Following
+                            </button>
+                        )}
+                        <button
+                            onClick={() => {
+                                setShowFilters(!showFilters);
+                                if (showSubscriptions) setShowSubscriptions(false);
+                            }}
+                            className={`flex items-center gap-3 px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all ${showFilters ? 'bg-primary text-white shadow-2xl scale-105' : 'bg-secondary/50 text-text border border-muted/10 hover:border-primary/50'}`}
+                        >
+                            <SlidersHorizontal size={20} />
+                            Filters
+                        </button>
+                    </div>
                 </header>
 
                 <div className="bg-secondary/40 backdrop-blur-3xl p-6 md:p-10 rounded-[48px] border border-muted/10 shadow-2xl space-y-8">
@@ -233,7 +286,13 @@ export default function JobSearchPage() {
                     )}
                 </div>
 
-                {loading ? (
+                {showSubscriptions ? (
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="bg-secondary/30 backdrop-blur-2xl p-10 rounded-[48px] border border-muted/10 shadow-2xl">
+                            <MySubscriptions />
+                        </div>
+                    </div>
+                ) : loading ? (
                     <div className="flex flex-col items-center justify-center py-40 space-y-6">
                         <Loader2 className="animate-spin h-16 w-16 text-primary" />
                         <p className="text-muted font-black uppercase tracking-[0.2em] animate-pulse text-lg">Curating the best jobs for you...</p>

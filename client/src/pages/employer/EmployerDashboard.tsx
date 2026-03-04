@@ -5,6 +5,7 @@ import api from '../../lib/api';
 import { Plus, Users, Briefcase, Eye, Calendar, Loader2, Edit2 } from 'lucide-react';
 import { AxiosError } from 'axios';
 import JobApplicantsList from '../../components/JobApplicantsList';
+import CompanySubscribers from '../../components/CompanySubscribers';
 
 type Job = {
     id: number;
@@ -30,6 +31,7 @@ export default function EmployerDashboard() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedJob, setSelectedJob] = useState<{ id: number, title: string } | null>(null);
+    const [activeTab, setActiveTab] = useState<'listings' | 'subscribers'>('listings');
 
     useEffect(() => {
         if (!authLoading && (!user || user.role !== 'company')) {
@@ -126,92 +128,115 @@ export default function EmployerDashboard() {
                     ))}
                 </div>
 
-                <section className="space-y-8">
-                    <div className="flex items-center gap-4">
-                        <h2 className="text-3xl font-black text-text tracking-tight uppercase italic">Your <span className="text-primary">Listings</span></h2>
-                        <div className="h-[2px] flex-1 bg-gradient-to-r from-muted/20 to-transparent"></div>
-                    </div>
+                <div className="flex items-center gap-4 border-b border-muted/10 pb-2">
+                    <button
+                        onClick={() => setActiveTab('listings')}
+                        className={`px-6 py-3 text-sm font-black uppercase tracking-widest transition-all relative ${activeTab === 'listings' ? 'text-primary' : 'text-muted hover:text-text'}`}
+                    >
+                        Listings
+                        {activeTab === 'listings' && <div className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-primary rounded-full shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]"></div>}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('subscribers')}
+                        className={`px-6 py-3 text-sm font-black uppercase tracking-widest transition-all relative ${activeTab === 'subscribers' ? 'text-primary' : 'text-muted hover:text-text'}`}
+                    >
+                        Followers
+                        {activeTab === 'subscribers' && <div className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-primary rounded-full shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]"></div>}
+                    </button>
+                </div>
 
-                    {jobs.length === 0 ? (
-                        <div className="text-center py-20 bg-secondary/20 backdrop-blur-md rounded-[48px] border-2 border-dashed border-muted/10">
-                            <div className="w-24 h-24 bg-muted/10 rounded-full flex items-center justify-center mx-auto mb-6 text-muted/20">
-                                <Briefcase size={48} />
-                            </div>
-                            <h3 className="text-3xl font-black text-text mb-2">No jobs posted yet</h3>
-                            <p className="text-muted mb-8 max-w-sm mx-auto font-bold uppercase tracking-wide text-sm">Start hiring by posting your first job opening.</p>
-                            <button
-                                onClick={() => navigate('/jobs/post')}
-                                className="px-10 py-4 bg-primary text-white rounded-2xl hover:bg-accent transition-all font-black uppercase tracking-widest shadow-lg"
-                            >
-                                Create Job Post
-                            </button>
+                {activeTab === 'listings' ? (
+                    <section className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="flex items-center gap-4">
+                            <h2 className="text-2xl font-black text-text tracking-tight uppercase italic">Active <span className="text-primary">Openings</span></h2>
+                            <div className="h-[2px] flex-1 bg-gradient-to-r from-muted/20 to-transparent"></div>
                         </div>
-                    ) : (
-                        <div className="grid gap-8">
-                            {jobs.map(job => (
-                                <div key={job.id} className="group bg-secondary/50 backdrop-blur-xl rounded-[40px] border border-muted/10 p-8 md:p-10 hover:border-primary/40 transition-all duration-500 shadow-xl hover:shadow-2xl hover:shadow-primary/5">
-                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-                                        <div className="space-y-5">
-                                            <div className="flex flex-wrap items-center gap-4">
-                                                <h3 className="text-3xl font-black text-text group-hover:text-primary transition-colors tracking-tight">{job.title}</h3>
-                                                <span className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${job.isActive
-                                                    ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
-                                                    : 'bg-muted/10 text-muted border border-muted/20'
-                                                    }`}>
-                                                    {job.isActive ? 'Active' : 'Closed'}
-                                                </span>
-                                            </div>
-                                            <div className="flex flex-wrap items-center gap-8 text-sm text-muted font-black uppercase tracking-widest">
-                                                <span className="flex items-center gap-3">
-                                                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(var(--primary-rgb),0.5)]"></div>
-                                                    {job.location}
-                                                </span>
-                                                <span className="flex items-center gap-3">
-                                                    <Briefcase size={16} className="text-primary/50" />
-                                                    {job.jobType.replace('_', ' ')}
-                                                </span>
-                                                <span className="flex items-center gap-3">
-                                                    <Calendar size={16} className="text-primary/50" />
-                                                    {formatDate(job.postedAt)}
-                                                </span>
-                                            </div>
-                                        </div>
 
-                                        <div className="flex items-center gap-8 md:gap-16 pl-8 md:pl-16 md:border-l border-muted/10">
-                                            <div className="text-center group-hover:scale-110 transition-transform duration-500">
-                                                <span className="block text-4xl font-black text-text tracking-tighter">
-                                                    {job.applicationCount || 0}
-                                                </span>
-                                                <span className="text-[10px] text-muted font-black uppercase tracking-[0.2em] mt-2 block">Applicants</span>
+                        {jobs.length === 0 ? (
+                            <div className="text-center py-20 bg-secondary/20 backdrop-blur-md rounded-[48px] border-2 border-dashed border-muted/10">
+                                <div className="w-24 h-24 bg-muted/10 rounded-full flex items-center justify-center mx-auto mb-6 text-muted/20">
+                                    <Briefcase size={48} />
+                                </div>
+                                <h3 className="text-3xl font-black text-text mb-2">No jobs posted yet</h3>
+                                <p className="text-muted mb-8 max-w-sm mx-auto font-bold uppercase tracking-wide text-sm">Start hiring by posting your first job opening.</p>
+                                <button
+                                    onClick={() => navigate('/jobs/post')}
+                                    className="px-10 py-4 bg-primary text-white rounded-2xl hover:bg-accent transition-all font-black uppercase tracking-widest shadow-lg"
+                                >
+                                    Create Job Post
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="grid gap-8">
+                                {jobs.map(job => (
+                                    <div key={job.id} className="group bg-secondary/50 backdrop-blur-xl rounded-[40px] border border-muted/10 p-8 md:p-10 hover:border-primary/40 transition-all duration-500 shadow-xl hover:shadow-2xl hover:shadow-primary/5">
+                                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+                                            <div className="space-y-5">
+                                                <div className="flex flex-wrap items-center gap-4">
+                                                    <h3 className="text-3xl font-black text-text group-hover:text-primary transition-colors tracking-tight">{job.title}</h3>
+                                                    <span className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${job.isActive
+                                                        ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                                                        : 'bg-muted/10 text-muted border border-muted/20'
+                                                        }`}>
+                                                        {job.isActive ? 'Active' : 'Closed'}
+                                                    </span>
+                                                </div>
+                                                <div className="flex flex-wrap items-center gap-8 text-sm text-muted font-black uppercase tracking-widest">
+                                                    <span className="flex items-center gap-3">
+                                                        <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(var(--primary-rgb),0.5)]"></div>
+                                                        {job.location}
+                                                    </span>
+                                                    <span className="flex items-center gap-3">
+                                                        <Briefcase size={16} className="text-primary/50" />
+                                                        {job.jobType.replace('_', ' ')}
+                                                    </span>
+                                                    <span className="flex items-center gap-3">
+                                                        <Calendar size={16} className="text-primary/50" />
+                                                        {formatDate(job.postedAt)}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div className="text-center group-hover:scale-110 transition-transform duration-500 delay-100">
-                                                <span className="block text-4xl font-black text-text tracking-tighter">
-                                                    {job.viewsCount || 0}
-                                                </span>
-                                                <span className="text-[10px] text-muted font-black uppercase tracking-[0.2em] mt-2 block">Views</span>
-                                            </div>
-                                            <div className="flex items-center gap-3">
-                                                <button
-                                                    className="p-4 bg-background border-2 border-muted/10 rounded-2xl text-muted hover:text-primary hover:border-primary transition-all duration-300 shadow-xl hover:scale-[1.05]"
-                                                    onClick={() => navigate(`/jobs/edit/${job.id}`)}
-                                                    title="Edit Job"
-                                                >
-                                                    <Edit2 size={20} />
-                                                </button>
-                                                <button
-                                                    className="px-10 py-4 bg-background border-2 border-muted/10 rounded-2xl text-sm font-black uppercase tracking-widest text-text hover:bg-primary hover:text-white hover:border-primary transition-all duration-300 shadow-2xl hover:scale-[1.05]"
-                                                    onClick={() => setSelectedJob({ id: job.id, title: job.title })}
-                                                >
-                                                    Manage
-                                                </button>
+
+                                            <div className="flex items-center gap-8 md:gap-16 pl-8 md:pl-16 md:border-l border-muted/10">
+                                                <div className="text-center group-hover:scale-110 transition-transform duration-500">
+                                                    <span className="block text-4xl font-black text-text tracking-tighter">
+                                                        {job.applicationCount || 0}
+                                                    </span>
+                                                    <span className="text-[10px] text-muted font-black uppercase tracking-[0.2em] mt-2 block">Applicants</span>
+                                                </div>
+                                                <div className="text-center group-hover:scale-110 transition-transform duration-500 delay-100">
+                                                    <span className="block text-4xl font-black text-text tracking-tighter">
+                                                        {job.viewsCount || 0}
+                                                    </span>
+                                                    <span className="text-[10px] text-muted font-black uppercase tracking-[0.2em] mt-2 block">Views</span>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <button
+                                                        className="p-4 bg-background border-2 border-muted/10 rounded-2xl text-muted hover:text-primary hover:border-primary transition-all duration-300 shadow-xl hover:scale-[1.05]"
+                                                        onClick={() => navigate(`/jobs/edit/${job.id}`)}
+                                                        title="Edit Job"
+                                                    >
+                                                        <Edit2 size={20} />
+                                                    </button>
+                                                    <button
+                                                        className="px-10 py-4 bg-background border-2 border-muted/10 rounded-2xl text-sm font-black uppercase tracking-widest text-text hover:bg-primary hover:text-white hover:border-primary transition-all duration-300 shadow-2xl hover:scale-[1.05]"
+                                                        onClick={() => setSelectedJob({ id: job.id, title: job.title })}
+                                                    >
+                                                        Manage
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </section>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+                ) : (
+                    <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <CompanySubscribers />
+                    </section>
+                )}
             </div>
 
             {selectedJob && (

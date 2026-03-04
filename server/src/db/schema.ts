@@ -359,6 +359,60 @@ export const savedJobs = pgTable(
 );
 
 // ============================================================================
+// SUBSCRIPTIONS: Users following Companies
+// ============================================================================
+
+export const companySubscriptions = pgTable(
+  'company_subscriptions',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    companyId: integer('company_id')
+      .notNull()
+      .references(() => companies.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => ({
+    userCompanyUnique: uniqueIndex('company_subs_user_company_idx').on(
+      table.userId,
+      table.companyId
+    ),
+    userIdIndex: index('company_subs_user_id_idx').on(table.userId),
+    companyIdIndex: index('company_subs_company_id_idx').on(table.companyId),
+  })
+);
+
+// ============================================================================
+// NOTIFICATIONS: In-app notification queue
+// ============================================================================
+
+export const notificationTypeEnum = pgEnum('notification_type', ['new_job']);
+
+export const notifications = pgTable(
+  'notifications',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    type: notificationTypeEnum('type').notNull().default('new_job'),
+    title: varchar('title', { length: 255 }).notNull(),
+    message: text('message').notNull(),
+    jobId: integer('job_id').references(() => jobs.id, { onDelete: 'set null' }),
+    companyId: integer('company_id').references(() => companies.id, { onDelete: 'set null' }),
+    isRead: boolean('is_read').notNull().default(false),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => ({
+    userIdIndex: index('notifications_user_id_idx').on(table.userId),
+    isReadIndex: index('notifications_is_read_idx').on(table.isRead),
+    createdAtIndex: index('notifications_created_at_idx').on(table.createdAt),
+  })
+);
+
+// ============================================================================
 // RELATIONS
 // ============================================================================
 
@@ -368,6 +422,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   userSkills: many(userSkills),
   applications: many(applications),
   savedJobs: many(savedJobs),
+  companySubscriptions: many(companySubscriptions),
+  notifications: many(notifications),
 }));
 
 export const companiesRelations = relations(companies, ({ one, many }) => ({
@@ -376,6 +432,7 @@ export const companiesRelations = relations(companies, ({ one, many }) => ({
     references: [users.id],
   }),
   jobs: many(jobs),
+  subscribers: many(companySubscriptions),
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
@@ -424,6 +481,7 @@ export const jobsRelations = relations(jobs, ({ one, many }) => ({
   jobSkills: many(jobSkills),
   applications: many(applications),
   savedJobs: many(savedJobs),
+  notifications: many(notifications),
 }));
 
 export const jobSkillsRelations = relations(jobSkills, ({ one }) => ({
@@ -459,6 +517,32 @@ export const savedJobsRelations = relations(savedJobs, ({ one }) => ({
   }),
 }));
 
+export const companySubscriptionsRelations = relations(companySubscriptions, ({ one }) => ({
+  user: one(users, {
+    fields: [companySubscriptions.userId],
+    references: [users.id],
+  }),
+  company: one(companies, {
+    fields: [companySubscriptions.companyId],
+    references: [companies.id],
+  }),
+}));
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
+  job: one(jobs, {
+    fields: [notifications.jobId],
+    references: [jobs.id],
+  }),
+  company: one(companies, {
+    fields: [notifications.companyId],
+    references: [companies.id],
+  }),
+}));
+
 // ============================================================================
 // TYPE EXPORTS
 // ============================================================================
@@ -474,6 +558,8 @@ export type Job = InferSelectModel<typeof jobs>;
 export type JobSkill = InferSelectModel<typeof jobSkills>;
 export type Application = InferSelectModel<typeof applications>;
 export type SavedJob = InferSelectModel<typeof savedJobs>;
+export type CompanySubscription = InferSelectModel<typeof companySubscriptions>;
+export type Notification = InferSelectModel<typeof notifications>;
 
 export type NewUser = InferInsertModel<typeof users>;
 export type NewCompany = InferInsertModel<typeof companies>;
@@ -486,9 +572,12 @@ export type NewJob = InferInsertModel<typeof jobs>;
 export type NewJobSkill = InferInsertModel<typeof jobSkills>;
 export type NewApplication = InferInsertModel<typeof applications>;
 export type NewSavedJob = InferInsertModel<typeof savedJobs>;
+export type NewCompanySubscription = InferInsertModel<typeof companySubscriptions>;
+export type NewNotification = InferInsertModel<typeof notifications>;
 
 export type UserRole = (typeof userRoleEnum.enumValues)[number];
 export type JobType = (typeof jobTypeEnum.enumValues)[number];
 export type ExperienceLevel = (typeof experienceLevelEnum.enumValues)[number];
 export type ApplicationStatus =
   (typeof applicationStatusEnum.enumValues)[number];
+export type NotificationType = (typeof notificationTypeEnum.enumValues)[number];

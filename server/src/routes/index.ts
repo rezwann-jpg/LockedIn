@@ -5,10 +5,11 @@ import { validateSignup, validateLogin } from '../middleware/validate';
 import { authenticate } from '../middleware/auth.middleware';
 import { getSkills } from '../controllers/skills.controller';
 import { getCategories } from '../controllers/category.controller';
-import { applyToJob } from '../controllers/jobs.controller';
 
 import jobsRoutes from './jobs.routes';
 import companyRoutes from './company.routes';
+import subscriptionRoutes from './subscription.routes';
+import notificationRoutes from './notification.routes';
 
 const router = Router();
 
@@ -18,6 +19,8 @@ router.get('/profile', authenticate, getUserProfile);
 router.put('/profile', authenticate, updateUserProfile);
 router.use('/jobs', jobsRoutes);
 router.use('/company', companyRoutes);
+router.use('/subscriptions', subscriptionRoutes);
+router.use('/notifications', notificationRoutes);
 
 router.get('/skills', getSkills);
 router.get('/categories', getCategories);
