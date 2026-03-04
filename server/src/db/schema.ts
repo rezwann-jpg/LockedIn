@@ -388,7 +388,7 @@ export const companySubscriptions = pgTable(
 // NOTIFICATIONS: In-app notification queue
 // ============================================================================
 
-export const notificationTypeEnum = pgEnum('notification_type', ['new_job']);
+export const notificationTypeEnum = pgEnum('notification_type', ['new_job', 'application_status_update']);
 
 export const notifications = pgTable(
   'notifications',
