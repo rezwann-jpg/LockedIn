@@ -193,12 +193,20 @@ export default function JobApplicantsList({ jobId, jobTitle, onClose }: JobAppli
                                             <Clock size={24} />
                                         </button>
                                         <button
-                                            disabled={updatingId === app.id}
+                                            disabled={updatingId === app.id || app.status === 'offered'}
                                             onClick={() => handleUpdateStatus(app.id, 'offered')}
                                             className="p-2 text-primary hover:bg-primary/10 rounded-xl transition-colors disabled:opacity-50"
                                             title="Offer"
                                         >
                                             <CheckCircle size={24} />
+                                        </button>
+                                        <button
+                                            disabled={updatingId === app.id || app.status === 'hired'}
+                                            onClick={() => handleUpdateStatus(app.id, 'hired')}
+                                            className="p-2 text-emerald-500 hover:bg-emerald-500/10 rounded-xl transition-colors disabled:opacity-50"
+                                            title="Hire"
+                                        >
+                                            <CheckCircle size={24} className="fill-emerald-500/20" />
                                         </button>
                                     </div>
                                 </div>

@@ -28,6 +28,12 @@ export default function EmployerDashboard() {
     const { user, loading: authLoading } = useAuth();
     const navigate = useNavigate();
     const [jobs, setJobs] = useState<Job[]>([]);
+    const [metrics, setMetrics] = useState<{
+        total_jobs_posted: number;
+        total_applications_received: number;
+        total_hires: number;
+        conversion_rate: number;
+    } | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedJob, setSelectedJob] = useState<{ id: number, title: string } | null>(null);
@@ -39,10 +45,14 @@ export default function EmployerDashboard() {
             return;
         }
 
-        const fetchJobs = async () => {
+        const fetchData = async () => {
             try {
-                const res = await api.get<{ jobs: Job[] }>('/company/jobs');
-                setJobs(res.data.jobs);
+                const [jobsRes, metricsRes] = await Promise.all([
+                    api.get<{ jobs: Job[] }>('/company/jobs'),
+                    api.get<{ metrics: any }>('/company/metrics')
+                ]);
+                setJobs(jobsRes.data.jobs);
+                setMetrics(metricsRes.data.metrics);
             } catch (err) {
                 console.error(err);
                 if (err instanceof AxiosError) {
@@ -53,10 +63,10 @@ export default function EmployerDashboard() {
                             state: { redirectAfter: '/employer/dashboard' }
                         });
                     } else {
-                        setError('Failed to load your jobs.');
+                        setError('Failed to load dashboard data.');
                     }
                 } else {
-                    setError('Failed to load your jobs.');
+                    setError('Failed to load dashboard data.');
                 }
             } finally {
                 setLoading(false);
@@ -64,7 +74,7 @@ export default function EmployerDashboard() {
         };
 
         if (user && user.role === 'company') {
-            fetchJobs();
+            fetchData();
         }
     }, [user, authLoading, navigate]);
 
@@ -81,8 +91,9 @@ export default function EmployerDashboard() {
 
     const stats = [
         { label: 'Active Jobs', value: jobs.filter(j => j.isActive).length, icon: Briefcase, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-        { label: 'Total Applicants', value: jobs.reduce((acc, job) => acc + (job.applicationCount || 0), 0), icon: Users, color: 'text-purple-500', bg: 'bg-purple-500/10' },
-        { label: 'Total Views', value: jobs.reduce((acc, job) => acc + (job.viewsCount || 0), 0), icon: Eye, color: 'text-green-500', bg: 'bg-green-500/10' },
+        { label: 'Total Applicants', value: metrics?.total_applications_received || 0, icon: Users, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+        { label: 'Total Hires', value: metrics?.total_hires || 0, icon: Users, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+        { label: 'Conversion Rate', value: `${metrics?.conversion_rate || 0}%`, icon: Eye, color: 'text-orange-500', bg: 'bg-orange-500/10' },
     ];
 
     return (

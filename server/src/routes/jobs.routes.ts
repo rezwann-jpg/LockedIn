@@ -33,6 +33,7 @@ router.get('/applications/my', authenticate, getMyApplications);
 // Companies: Update application status
 router.patch('/applications/:id', authenticate, updateApplicationStatus);
 
+
 // Seekers: Resume management — MUST be before /:id
 router.get('/resumes', authenticate, getUserResumes);
 router.post('/resumes', authenticate, uploadResume);

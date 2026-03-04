@@ -44,10 +44,10 @@ async function main() {
                 c.name as company_name,
                 COUNT(DISTINCT j.id) as total_jobs_posted,
                 COALESCE(SUM(j.application_count), 0) as total_applications_received,
-                COUNT(DISTINCT a.id) FILTER (WHERE a.status = 'hired') as total_hires,
+                COUNT(DISTINCT a.id) FILTER (WHERE a.status IN ('hired', 'offered')) as total_hires,
                 CASE 
                     WHEN COALESCE(SUM(j.application_count), 0) = 0 THEN 0
-                    ELSE ROUND((COUNT(DISTINCT a.id) FILTER (WHERE a.status = 'hired')::numeric / NULLIF(SUM(j.application_count), 0)) * 100, 2)
+                    ELSE ROUND((COUNT(DISTINCT a.id) FILTER (WHERE a.status IN ('hired', 'offered'))::numeric / NULLIF(SUM(j.application_count), 0)) * 100, 2)
                 END as conversion_rate
             FROM companies c
             LEFT JOIN jobs j ON c.id = j.company_id

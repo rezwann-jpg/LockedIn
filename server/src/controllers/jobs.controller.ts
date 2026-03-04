@@ -533,3 +533,39 @@ export const getMarketTrends = async (_req: Request, res: Response) => {
         res.status(500).json({ error: 'Failed to fetch market trends' });
     }
 };
+
+// 10. GET /company/metrics - Get advanced company performance analytics
+export const getCompanyMetrics = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId || req.user?.role !== 'company') {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        const companyId = await getCompanyIdForUser(userId);
+        if (!companyId) {
+            return res.status(404).json({ error: 'Company profile not found' });
+        }
+
+        const result = await db.execute(sql`
+            SELECT * FROM company_performance_metrics 
+            WHERE company_id = ${companyId}
+        `);
+
+        if (result.rows.length === 0) {
+            return res.json({
+                metrics: {
+                    total_jobs_posted: 0,
+                    total_applications_received: 0,
+                    total_hires: 0,
+                    conversion_rate: 0
+                }
+            });
+        }
+
+        res.json({ metrics: result.rows[0] });
+    } catch (err) {
+        console.error('Error fetching company metrics:', err);
+        res.status(500).json({ error: 'Failed to fetch company metrics' });
+    }
+};
