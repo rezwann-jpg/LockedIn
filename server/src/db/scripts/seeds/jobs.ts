@@ -6,12 +6,6 @@ import { eq, sql } from 'drizzle-orm';
 export async function seedJobs() {
     console.log('💼 Seeding jobs...');
 
-    // 1. Clear existing job data for a clean reseed
-    console.log('Clearing existing jobs, job_skills, and applications...');
-    await db.execute(sql`TRUNCATE TABLE applications CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE job_skills CASCADE`);
-    await db.execute(sql`TRUNCATE TABLE jobs CASCADE`);
-
     // 2. Get companies to associate jobs with
     const availableCompanies = await db.select().from(companies).limit(5);
     if (availableCompanies.length === 0) {
@@ -40,22 +34,72 @@ export async function seedJobs() {
             skills: ['React', 'TypeScript', 'Node.js']
         },
         {
-            title: 'UI/UX Designer',
-            description: 'Design elegant products for our global client base.',
-            location: 'New York, NY',
-            companyId: availableCompanies[1] ? availableCompanies[1].id : availableCompanies[0].id,
-            categoryId: categoryMap['Design'],
+            title: 'AI Researcher',
+            description: 'Push the boundaries of what is possible with Large Language Models.',
+            location: 'San Francisco, CA',
+            companyId: availableCompanies[0].id,
+            categoryId: categoryMap['AI & Machine Learning'],
             jobType: 'full_time' as const,
-            salaryMin: 90000,
-            salaryMax: 130000,
-            requirements: 'Portfolio showcasing web and mobile designs.',
-            skills: ['UI Design', 'Figma']
+            salaryMin: 150000,
+            salaryMax: 220000,
+            requirements: 'PhD in CS or related field, background in PyTorch.',
+            skills: ['Python', 'PyTorch', 'Machine Learning']
+        },
+        {
+            title: 'High School Mathematics Teacher',
+            description: 'Inspire the next generation of engineers and scientists.',
+            location: 'London, UK',
+            companyId: availableCompanies[1] ? availableCompanies[1].id : availableCompanies[0].id,
+            categoryId: categoryMap['Teaching'],
+            jobType: 'full_time' as const,
+            salaryMin: 45000,
+            salaryMax: 65000,
+            requirements: 'QTS qualification and 2+ years experience.',
+            skills: ['Mathematics', 'Pedagogy', 'Classroom Management']
+        },
+        {
+            title: 'Senior Nurse (ER)',
+            description: 'Provide critical care in a fast-paced environment.',
+            location: 'Boston, MA',
+            companyId: availableCompanies[2] ? availableCompanies[2].id : availableCompanies[0].id,
+            categoryId: categoryMap['Nursing'],
+            jobType: 'full_time' as const,
+            salaryMin: 85000,
+            salaryMax: 110000,
+            requirements: 'RN certification and 5+ years in Emergency Medicine.',
+            skills: ['Emergency Medicine', 'Patient Care', 'ACLS']
+        },
+        {
+            title: 'Enterprise Account Executive',
+            description: 'Drive growth by managing complex sales cycles with Fortune 500 companies.',
+            location: 'New York, NY',
+            companyId: availableCompanies[3] ? availableCompanies[3].id : availableCompanies[0].id,
+            categoryId: categoryMap['Sales'],
+            jobType: 'full_time' as const,
+            salaryMin: 100000,
+            salaryMax: 150000,
+            requirements: 'Proven track record in B2B SaaS sales.',
+            skills: ['B2B Sales', 'Negotiation', 'CRM']
+        },
+        {
+            title: 'DevOps Engineer',
+            description: 'Scale our multi-cloud infrastructure.',
+            location: 'Remote',
+            companyId: availableCompanies[0].id,
+            categoryId: categoryMap['DevOps'],
+            jobType: 'contract' as const,
+            salaryMin: 90,
+            salaryMax: 130,
+            requirements: 'Expertise in Kubernetes and Terraform.',
+            skills: ['Kubernetes', 'AWS', 'Terraform']
         }
     ];
 
     for (const j of jobData) {
         const { skills: jobSkillNames, ...jobDetails } = j;
-        const [newJob] = await db.insert(jobs).values(jobDetails).returning();
+        const [newJob] = await db.insert(jobs).values(jobDetails).onConflictDoNothing().returning();
+
+        if (!newJob) continue; // Skip if job already exists
 
         // Ensure skills exist and link them
         for (const skillName of jobSkillNames) {

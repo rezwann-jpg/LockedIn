@@ -3,11 +3,11 @@ import { sql } from 'drizzle-orm';
 import db from '../../../config/db';
 
 export async function setupExtensions() {
-    console.log('Running DB Extensions Setup...');
+  console.log('Running DB Extensions Setup...');
 
-    // 1. Stored Procedure: archive_expired_jobs
-    console.log('Creating stored procedure: archive_expired_jobs...');
-    await db.execute(sql`
+  // 1. Stored Procedure: archive_expired_jobs
+  console.log('Creating stored procedure: archive_expired_jobs...');
+  await db.execute(sql`
     CREATE OR REPLACE FUNCTION archive_expired_jobs()
     RETURNS void AS $$
     BEGIN
@@ -18,9 +18,9 @@ export async function setupExtensions() {
     $$ LANGUAGE plpgsql;
   `);
 
-    // 2. Trigger Function: update_job_application_count
-    console.log('Creating trigger function: update_job_application_count...');
-    await db.execute(sql`
+  // 2. Trigger Function: update_job_application_count
+  console.log('Creating trigger function: update_job_application_count...');
+  await db.execute(sql`
     CREATE OR REPLACE FUNCTION update_job_application_count()
     RETURNS TRIGGER AS $$
     BEGIN
@@ -36,9 +36,9 @@ export async function setupExtensions() {
     $$ LANGUAGE plpgsql;
   `);
 
-    // 3. Trigger: update_job_stats
-    console.log('Creating trigger: update_job_stats...');
-    await db.execute(sql`
+  // 3. Trigger: update_job_stats
+  console.log('Creating trigger: update_job_stats...');
+  await db.execute(sql`
     DROP TRIGGER IF EXISTS update_job_stats ON applications;
     CREATE TRIGGER update_job_stats
     AFTER INSERT OR DELETE ON applications
@@ -46,9 +46,9 @@ export async function setupExtensions() {
     EXECUTE FUNCTION update_job_application_count();
   `);
 
-    // 4. Function: update_updated_at_column
-    console.log('Creating function: update_updated_at_column...');
-    await db.execute(sql`
+  // 4. Function: update_updated_at_column
+  console.log('Creating function: update_updated_at_column...');
+  await db.execute(sql`
     CREATE OR REPLACE FUNCTION update_updated_at_column()
     RETURNS TRIGGER AS $$
     BEGIN
@@ -58,22 +58,22 @@ export async function setupExtensions() {
     $$ LANGUAGE plpgsql;
   `);
 
-    // 5. Triggers: set_timestamp (for users, companies, jobs, applications)
-    const tables = ['users', 'companies', 'jobs', 'applications'];
-    for (const table of tables) {
-        console.log(`Creating updated_at trigger for table: ${table}...`);
-        await db.execute(sql.raw(`
+  // 5. Triggers: set_timestamp (for users, companies, jobs, applications)
+  const tables = ['users', 'companies', 'jobs', 'applications'];
+  for (const table of tables) {
+    console.log(`Creating updated_at trigger for table: ${table}...`);
+    await db.execute(sql.raw(`
       DROP TRIGGER IF EXISTS set_timestamp ON ${table};
       CREATE TRIGGER set_timestamp
       BEFORE UPDATE ON ${table}
       FOR EACH ROW
       EXECUTE FUNCTION update_updated_at_column();
     `));
-    }
+  }
 
-    // 6. Stored Procedure: reactivate_expired_job
-    console.log('Creating stored procedure: reactivate_expired_job...');
-    await db.execute(sql`
+  // 6. Stored Procedure: reactivate_expired_job
+  console.log('Creating stored procedure: reactivate_expired_job...');
+  await db.execute(sql`
     CREATE OR REPLACE FUNCTION reactivate_expired_job(p_job_id INT, p_days_active INT)
     RETURNS void AS $$
     BEGIN
@@ -86,9 +86,9 @@ export async function setupExtensions() {
     $$ LANGUAGE plpgsql;
   `);
 
-    // 7. Function: get_or_create_skill_id
-    console.log('Creating function: get_or_create_skill_id...');
-    await db.execute(sql`
+  // 7. Function: get_or_create_skill_id
+  console.log('Creating function: get_or_create_skill_id...');
+  await db.execute(sql`
     CREATE OR REPLACE FUNCTION get_or_create_skill_id(p_name TEXT)
     RETURNS INT AS $$
     DECLARE
@@ -103,9 +103,9 @@ export async function setupExtensions() {
     $$ LANGUAGE plpgsql;
   `);
 
-    // 8. Function: has_user_graduated
-    console.log('Creating function: has_user_graduated...');
-    await db.execute(sql`
+  // 8. Function: has_user_graduated
+  console.log('Creating function: has_user_graduated...');
+  await db.execute(sql`
     CREATE OR REPLACE FUNCTION has_user_graduated(p_user_id INT)
     RETURNS BOOLEAN AS $$
     DECLARE
@@ -121,9 +121,9 @@ export async function setupExtensions() {
     $$ LANGUAGE plpgsql;
   `);
 
-    // 9. Stored Procedure: add_user_skill_by_name
-    console.log('Creating stored procedure: add_user_skill_by_name...');
-    await db.execute(sql`
+  // 9. Stored Procedure: add_user_skill_by_name
+  console.log('Creating stored procedure: add_user_skill_by_name...');
+  await db.execute(sql`
     CREATE OR REPLACE PROCEDURE add_user_skill_by_name(p_user_id INT, p_skill_name TEXT)
     AS $$
     DECLARE
@@ -137,9 +137,9 @@ export async function setupExtensions() {
     $$ LANGUAGE plpgsql;
   `);
 
-    // 10. Stored Procedure: update_user_skills
-    console.log('Creating stored procedure: update_user_skills...');
-    await db.execute(sql`
+  // 10. Stored Procedure: update_user_skills
+  console.log('Creating stored procedure: update_user_skills...');
+  await db.execute(sql`
     CREATE OR REPLACE PROCEDURE update_user_skills(p_user_id INT, p_skill_names TEXT[])
     AS $$
     DECLARE
@@ -159,9 +159,9 @@ export async function setupExtensions() {
     $$ LANGUAGE plpgsql;
   `);
 
-    // 11. Stored Procedure: update_job_skills
-    console.log('Creating stored procedure: update_job_skills...');
-    await db.execute(sql`
+  // 11. Stored Procedure: update_job_skills
+  console.log('Creating stored procedure: update_job_skills...');
+  await db.execute(sql`
     CREATE OR REPLACE PROCEDURE update_job_skills(p_job_id INT, p_skill_names TEXT[])
     AS $$
     DECLARE
@@ -181,28 +181,39 @@ export async function setupExtensions() {
     $$ LANGUAGE plpgsql;
   `);
 
-    // 12. Seed Default Categories
-    console.log('Seeding default categories...');
-    const defaultCategories = [
-        'Software Development',
-        'Design',
-        'Marketing',
-        'Product Management',
-        'Sales',
-        'Data Science',
-        'Customer Support',
-        'Operations',
-        'Human Resources',
-        'Finance'
-    ];
+  // 12. Seed Default Categories
+  console.log('Seeding default categories...');
+  const defaultCategories = [
+    'Software Development',
+    'Mobile Development',
+    'DevOps',
+    'AI & Machine Learning',
+    'Design',
+    'UI/UX Design',
+    'Marketing',
+    'Sales',
+    'Product Management',
+    'Data Science',
+    'Customer Support',
+    'Operations',
+    'Human Resources',
+    'Finance',
+    'Legal',
+    'Healthcare Admin',
+    'Nursing',
+    'Medical Research',
+    'Teaching',
+    'Curriculum Design',
+    'Education Management'
+  ];
 
-    for (const catName of defaultCategories) {
-        await db.execute(sql`
+  for (const catName of defaultCategories) {
+    await db.execute(sql`
       INSERT INTO categories (name) 
       VALUES (${catName}) 
       ON CONFLICT (name) DO NOTHING;
     `);
-    }
+  }
 
-    console.log('DB Extensions Setup Completed.');
+  console.log('DB Extensions Setup Completed.');
 }

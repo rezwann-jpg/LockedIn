@@ -1,6 +1,7 @@
 // src/db/seed.ts
 import { seedUsers } from './scripts/seeds/users';
 import { seedJobs } from './scripts/seeds/jobs';
+import { seedApplications } from './scripts/seeds/applications';
 
 async function seed() {
     console.log('🌱 Starting Consolidated Seeding...');
@@ -8,6 +9,7 @@ async function seed() {
     try {
         await seedUsers();
         await seedJobs();
+        await seedApplications();
 
         console.log('✅ All data seeded successfully!');
         process.exit(0);
